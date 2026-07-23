@@ -11,8 +11,16 @@ type Product = Tables<"products">;
 
 const ALL_CATEGORIES = "__all__";
 
+// Warehouse-only: is the bulk reserve itself running low? Early warning -
+// you might still have stock sitting in machines even if this is true.
 function isLowBulkStock(p: Product) {
   return p.warehouse_qty <= (p.warehouse_par_level ?? 0);
+}
+
+// Total on hand (bulk + everything currently loaded into machines): is
+// there truly none of this left anywhere? The more urgent signal.
+function needsReordering(p: Product, inMachines: number) {
+  return p.warehouse_qty + inMachines <= (p.warehouse_par_level ?? 0);
 }
 
 export function ProductsView({
@@ -35,8 +43,8 @@ export function ProductsView({
   );
 
   const needsReorderingCount = useMemo(
-    () => products.filter((p) => p.status === "re-purchase needed").length,
-    [products]
+    () => products.filter((p) => needsReordering(p, inMachinesByProduct[p.id] ?? 0)).length,
+    [products, inMachinesByProduct]
   );
 
   const lowBulkStockCount = useMemo(() => products.filter(isLowBulkStock).length, [products]);
@@ -45,7 +53,7 @@ export function ProductsView({
     let result = products;
 
     if (filter === "needs-reordering") {
-      result = result.filter((p) => p.status === "re-purchase needed");
+      result = result.filter((p) => needsReordering(p, inMachinesByProduct[p.id] ?? 0));
     } else if (filter === "low-bulk-stock") {
       result = result.filter(isLowBulkStock);
     }
@@ -62,22 +70,30 @@ export function ProductsView({
     }
 
     return result;
-  }, [products, filter, category, search]);
+  }, [products, filter, category, search, inMachinesByProduct]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-          <TabsList>
-            <TabsTrigger value="all">All ({products.length})</TabsTrigger>
-            <TabsTrigger value="needs-reordering">
-              Needs reordering ({needsReorderingCount})
-            </TabsTrigger>
-            <TabsTrigger value="low-bulk-stock">
-              Low bulk stock ({lowBulkStockCount})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div>
+          <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+            <TabsList>
+              <TabsTrigger value="all">All ({products.length})</TabsTrigger>
+              <TabsTrigger value="needs-reordering">
+                Needs reordering ({needsReorderingCount})
+              </TabsTrigger>
+              <TabsTrigger value="low-bulk-stock">
+                Low bulk stock ({lowBulkStockCount})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            {filter === "needs-reordering" &&
+              "None left anywhere — bulk stock + everything currently in machines."}
+            {filter === "low-bulk-stock" &&
+              "Bulk (warehouse) reserve is running low — may still have stock in machines."}
+          </p>
+        </div>
         <div className="flex gap-2">
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="w-44">

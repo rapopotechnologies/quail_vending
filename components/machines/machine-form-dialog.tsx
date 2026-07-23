@@ -20,12 +20,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageUpload } from "@/components/shared/image-upload";
 import type { Tables } from "@/lib/supabase/types";
 
 type Machine = Tables<"machines">;
 
 export function MachineFormDialog({ machine }: { machine?: Machine }) {
   const [open, setOpen] = useState(false);
+  const [uploadId] = useState(() => machine?.id ?? crypto.randomUUID());
   const router = useRouter();
   const isEdit = !!machine;
 
@@ -42,10 +44,12 @@ export function MachineFormDialog({ machine }: { machine?: Machine }) {
       ? {
           name: machine.name,
           location: machine.location ?? "",
+          address: machine.address ?? "",
           profit_share_pct: machine.profit_share_pct,
           status: machine.status as MachineValues["status"],
+          image_url: machine.image_url,
         }
-      : { name: "", location: "", status: "active" },
+      : { name: "", location: "", address: "", status: "active", image_url: null },
   });
 
   async function onSubmit(values: MachineValues) {
@@ -78,13 +82,36 @@ export function MachineFormDialog({ machine }: { machine?: Machine }) {
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
+            <Label>Photo</Label>
+            <ImageUpload
+              bucket="machine-images"
+              pathPrefix={uploadId}
+              value={watch("image_url") ?? null}
+              onChange={(url) => setValue("image_url", url)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Shown on the public landing page for active machines.
+            </p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input id="name" {...register("name")} />
             {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input id="location" {...register("location")} />
+            <Label htmlFor="location">Location note</Label>
+            <Input id="location" placeholder="Bldg 4 Lobby" {...register("location")} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="address">Address</Label>
+            <Input
+              id="address"
+              placeholder="500 Main St, Springfield"
+              {...register("address")}
+            />
+            <p className="text-xs text-muted-foreground">
+              Shown on the public landing page for active machines.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="profit_share_pct">Profit share % (owed to location)</Label>

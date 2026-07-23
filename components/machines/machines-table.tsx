@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { deleteMachine } from "@/app/actions/machines";
@@ -37,8 +39,10 @@ export function MachinesTable({
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-12"></TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Location</TableHead>
+          <TableHead>Address</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Profit share</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -47,12 +51,28 @@ export function MachinesTable({
       <TableBody>
         {machines.map((machine) => (
           <TableRow key={machine.id}>
+            <TableCell>
+              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded bg-muted">
+                {machine.image_url ? (
+                  <Image
+                    src={machine.image_url}
+                    alt=""
+                    width={32}
+                    height={32}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+            </TableCell>
             <TableCell className="font-medium">
               <Link href={`/admin/machines/${machine.id}`} className="hover:underline">
                 {machine.name}
               </Link>
             </TableCell>
             <TableCell>{machine.location || "—"}</TableCell>
+            <TableCell>{machine.address || "—"}</TableCell>
             <TableCell>
               <Badge variant={STATUS_VARIANT[machine.status] ?? "secondary"}>{machine.status}</Badge>
             </TableCell>

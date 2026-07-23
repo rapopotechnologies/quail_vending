@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth/current-user";
@@ -56,8 +57,20 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
             </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          {machine.location || "No location set"}
+        <CardContent className="flex items-start gap-4">
+          {machine.image_url && (
+            <Image
+              src={machine.image_url}
+              alt={machine.name}
+              width={96}
+              height={96}
+              className="h-24 w-24 shrink-0 rounded-md object-cover"
+            />
+          )}
+          <div className="text-sm text-muted-foreground">
+            <p>{machine.location || "No location set"}</p>
+            {machine.address && <p>{machine.address}</p>}
+          </div>
         </CardContent>
       </Card>
 

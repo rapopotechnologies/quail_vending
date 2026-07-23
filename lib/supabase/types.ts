@@ -53,24 +53,30 @@ export type Database = {
       }
       machines: {
         Row: {
+          address: string | null
           created_at: string
           id: string
+          image_url: string | null
           location: string | null
           name: string
           profit_share_pct: number | null
           status: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           location?: string | null
           name: string
           profit_share_pct?: number | null
           status?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           location?: string | null
           name?: string
           profit_share_pct?: number | null
@@ -121,6 +127,7 @@ export type Database = {
           delivery_unit_cost_business: number | null
           delivery_unit_cost_retail: number | null
           id: string
+          image_url: string | null
           item_id: string | null
           name: string
           notes: string | null
@@ -142,6 +149,7 @@ export type Database = {
           delivery_unit_cost_business?: number | null
           delivery_unit_cost_retail?: number | null
           id?: string
+          image_url?: string | null
           item_id?: string | null
           name: string
           notes?: string | null
@@ -163,6 +171,7 @@ export type Database = {
           delivery_unit_cost_business?: number | null
           delivery_unit_cost_retail?: number | null
           id?: string
+          image_url?: string | null
           item_id?: string | null
           name?: string
           notes?: string | null
@@ -347,8 +356,10 @@ export type Database = {
     Views: {
       public_location_impact: {
         Row: {
+          address: string | null
           charity_estimate: number | null
           id: string | null
+          image_url: string | null
           location: string | null
           name: string | null
         }

@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { deleteProduct } from "@/app/actions/products";
@@ -38,6 +40,7 @@ export function ProductsTable({
     <Table className="table-fixed">
       <TableHeader>
         <TableRow>
+          <TableHead className="w-12"></TableHead>
           <TableHead>Name</TableHead>
           <TableHead className="w-20">SKU</TableHead>
           <TableHead className="w-40">Category</TableHead>
@@ -55,6 +58,21 @@ export function ProductsTable({
           const totalOnHand = product.warehouse_qty + inMachines;
           return (
             <TableRow key={product.id}>
+              <TableCell>
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded bg-muted">
+                  {product.image_url ? (
+                    <Image
+                      src={product.image_url}
+                      alt=""
+                      width={32}
+                      height={32}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+              </TableCell>
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell className="truncate">{product.item_id || "—"}</TableCell>
               <TableCell className="truncate">{product.category || "—"}</TableCell>

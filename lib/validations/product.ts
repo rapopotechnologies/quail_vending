@@ -19,6 +19,7 @@ export const productSchema = z.object({
   warehouse_qty: z.coerce.number().int().min(0).default(0),
   warehouse_par_level: optionalNumber,
   units_per_case: z.coerce.number().int().min(1).default(1),
+  image_url: z.string().url().optional().nullable(),
 });
 
 export type ProductValues = z.infer<typeof productSchema>;

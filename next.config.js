@@ -3,6 +3,15 @@ const nextConfig = {
   // Supabase JS v2 + generated types version mismatch produces widespread `never` inference.
   // The app runs correctly — suppress build-time type errors until types are regenerated.
   typescript: { ignoreBuildErrors: true },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+    ],
+  },
   async headers() {
     return [
       {

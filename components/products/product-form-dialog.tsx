@@ -21,12 +21,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageUpload } from "@/components/shared/image-upload";
 import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
 
 export function ProductFormDialog({ product }: { product?: Product }) {
   const [open, setOpen] = useState(false);
+  const [uploadId] = useState(() => product?.id ?? crypto.randomUUID());
   const router = useRouter();
   const isEdit = !!product;
 
@@ -58,8 +60,9 @@ export function ProductFormDialog({ product }: { product?: Product }) {
           warehouse_qty: product.warehouse_qty,
           warehouse_par_level: product.warehouse_par_level,
           units_per_case: product.units_per_case,
+          image_url: product.image_url,
         }
-      : { name: "", status: "re-purchase needed", warehouse_qty: 0, units_per_case: 1 },
+      : { name: "", status: "re-purchase needed", warehouse_qty: 0, units_per_case: 1, image_url: null },
   });
 
   async function onSubmit(values: ProductValues) {
@@ -91,6 +94,16 @@ export function ProductFormDialog({ product }: { product?: Product }) {
           <DialogTitle>{isEdit ? "Edit product" : "Add product"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Photo</Label>
+            <ImageUpload
+              bucket="product-images"
+              pathPrefix={uploadId}
+              value={watch("image_url") ?? null}
+              onChange={(url) => setValue("image_url", url)}
+            />
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
