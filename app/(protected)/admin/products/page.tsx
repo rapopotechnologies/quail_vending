@@ -1,11 +1,25 @@
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/auth/current-user";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProductsView } from "@/components/products/products-view";
+import { ProductFormDialog } from "@/components/products/product-form-dialog";
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const supabase = await createSupabaseServerClient();
+  const [{ data: products }, profile] = await Promise.all([
+    supabase.from("products").select("*").order("name"),
+    getCurrentProfile(),
+  ]);
+
   return (
-    <PagePlaceholder
-      title="Products"
-      description="Product catalog, costs by channel, and reorder status."
-      phase="Phase 2 (Core CRUD)"
-    />
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <CardTitle>Products</CardTitle>
+        <ProductFormDialog />
+      </CardHeader>
+      <CardContent>
+        <ProductsView products={products ?? []} canDelete={profile?.role === "super_admin"} />
+      </CardContent>
+    </Card>
   );
 }
