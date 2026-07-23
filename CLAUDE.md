@@ -74,6 +74,12 @@ Apply new migrations via Supabase MCP (`apply_migration`) against project `tehoe
 
 Charts (`components/reports/revenue-bar-chart.tsx`) are Recharts, single-hue bars (`hsl(var(--primary))`) since each chart is one series by category — no legend needed. CSV export (`components/reports/export-csv-button.tsx`) builds the CSV client-side from already-fetched `SaleRecord[]` and triggers a download via `Blob` + an anchor `download` attribute — no server round-trip.
 
+`/admin/reports` scopes its sales query with a date-range selector (`components/reports/date-range-select.tsx`, options in `lib/reports/date-range.ts` — kept in a plain, non-`"use client"` module since a client component's exports become opaque client references when imported into a server component, which broke calling `.some()` on them server-side). Range is a `?range=` URL query param (default `90d`) read in `app/(protected)/admin/reports/page.tsx` and translated to a `sinceISO` passed into `fetchSalesWithNames` — charts, the sales count, and CSV export all scope to whatever's selected. Dashboard still always fetches full history since one of its four fixed summary cards is genuinely "all time."
+
+## Team management (`/admin/team`)
+
+`super_admin`-only page (gated both by hiding the nav link for `staff` and by a server-side role check in the page itself — direct URL access shows "Only a super admin can manage the team" rather than the real list). Lists every `profiles` row with role, joined against `auth.users` for email via the service-role client's `auth.admin.listUsers()` (profiles don't store email; there's no PostgREST-exposed join to `auth.users` for the regular client). `InviteDialog` calls `inviteStaff` (`app/actions/team.ts`), which re-checks `super_admin` server-side before calling `auth.admin.inviteUserByEmail` — never trust the UI gate alone, same principle as the RLS boundary rule above. Reuses the invite → `/auth/callback` → `/set-password` flow already built in Phase 1; no new email template needed. `TeamTable`'s role `<Select>` calls `updateProfileRole`, disabled for the signed-in user's own row (a super admin can't accidentally demote themselves through this UI, though direct API calls are still possible — not worth hardening further at this team size).
+
 ## Marketing / landing page (`app/page.tsx`)
 
 Sections, top to bottom: `SiteHeader` (logo, anchor nav, deliberately no admin/login link), `Hero`, `ValuesSection` (icon-based — no real vending-machine photography yet, see Known gaps), `LocationsSection` (`#locations`, real active machines via `public_location_impact`), `GenerosityLeaderboard` (`#impact`, same view, ranked by `charity_estimate`, gold accent bars — `hsl(var(--gold))`, a separate token from the shadcn `accent` semantic color so it doesn't collide with admin-UI hover states), `InquiryForm` (`#partner`, client component, `submitInquiry` server action), `SiteFooter` (charity blurb + the one "Staff login" link in the whole public site, pointing at `/login`).
@@ -82,8 +88,8 @@ Brand colors (`app/globals.css` `--primary`/`--gold` tokens) are derived from `p
 
 ## Known gaps (tracked for later phases — see PLAN.md)
 
-- No invite-user server action yet — invites must be sent from the Supabase Dashboard (Authentication → Users → Invite) until a `super_admin`-gated invite form is built
 - Supabase Dashboard config still needed manually (no MCP/CLI tool covers this): Authentication → URL Configuration (Site URL + Redirect URLs → the deployed Vercel domain), and Authentication → Email Templates (Invite/Reset Password links → token-hash format pointing at `/auth/callback`)
-- Dashboard/reports fetch full sales history on every load (no pagination/date-range filter) — fine at current scale (2 machines, small team), revisit only if it accelerates well past the 3-year projection noted in PLAN.md §7
+- Dashboard still fetches full sales history on every load (needed for its "all time" summary card) — fine at current scale (2 machines, small team), revisit only if it accelerates well past the 3-year projection noted in PLAN.md §7. Reports is now date-range scoped (see above).
 - No real vending-machine/product photography — `ValuesSection` uses lucide icons as placeholders until real photos are ready to drop in
 - No email/Slack notification when a `partner_inquiries` row is inserted — staff currently need to check `/admin/leads` manually
+- Mobile admin UI has only ever had a code-level responsive-class review, never a real on-device check — the dev environment's browser automation can't produce a true narrow viewport (see PLAN.md §7.7)

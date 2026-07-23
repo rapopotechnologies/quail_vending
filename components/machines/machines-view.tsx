@@ -52,7 +52,7 @@ export function MachinesView({ machines, canDelete }: { machines: Machine[]; can
           placeholder="Search name, location, or address..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-72"
+          className="w-full sm:w-72"
         />
       </div>
       {filtered.length === 0 ? (

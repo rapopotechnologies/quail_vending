@@ -129,9 +129,9 @@ export function ProductsView({
               "Bulk (warehouse) reserve is running low — may still have stock in machines."}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-full sm:w-44">
               <SelectValue placeholder="All categories" />
             </SelectTrigger>
             <SelectContent>
@@ -147,7 +147,7 @@ export function ProductsView({
             placeholder="Search name or SKU..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-56"
+            className="w-full sm:w-56"
           />
         </div>
       </div>
