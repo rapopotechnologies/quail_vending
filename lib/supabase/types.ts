@@ -132,6 +132,7 @@ export type Database = {
           size_unit_oz: number | null
           source_vendor: string | null
           status: string
+          units_per_case: number
           warehouse_par_level: number | null
           warehouse_qty: number
         }
@@ -152,6 +153,7 @@ export type Database = {
           size_unit_oz?: number | null
           source_vendor?: string | null
           status?: string
+          units_per_case?: number
           warehouse_par_level?: number | null
           warehouse_qty?: number
         }
@@ -172,6 +174,7 @@ export type Database = {
           size_unit_oz?: number | null
           source_vendor?: string | null
           status?: string
+          units_per_case?: number
           warehouse_par_level?: number | null
           warehouse_qty?: number
         }

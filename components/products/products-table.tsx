@@ -65,6 +65,11 @@ export function ProductsTable({
                 {product.warehouse_qty}
                 {product.warehouse_par_level != null && ` / ${product.warehouse_par_level} par`}
                 {lowBulkStock && " (low)"}
+                {product.units_per_case > 1 && (
+                  <span className="ml-1 text-xs text-muted-foreground">
+                    ({product.units_per_case}/case)
+                  </span>
+                )}
               </TableCell>
               <TableCell title={`${product.warehouse_qty} bulk + ${inMachines} across machines`}>
                 {totalOnHand}

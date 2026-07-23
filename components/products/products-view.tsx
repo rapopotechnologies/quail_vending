@@ -2,10 +2,14 @@
 
 import { useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductsTable } from "@/components/products/products-table";
 import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
+
+const ALL_CATEGORIES = "__all__";
 
 function isLowBulkStock(p: Product) {
   return p.warehouse_par_level != null && p.warehouse_qty <= p.warehouse_par_level;
@@ -21,6 +25,14 @@ export function ProductsView({
   canDelete: boolean;
 }) {
   const [filter, setFilter] = useState<"all" | "needs-reordering" | "low-bulk-stock">("all");
+  const [category, setCategory] = useState(ALL_CATEGORIES);
+  const [search, setSearch] = useState("");
+
+  const categories = useMemo(
+    () =>
+      Array.from(new Set(products.map((p) => p.category).filter((c): c is string => !!c))).sort(),
+    [products]
+  );
 
   const needsReorderingCount = useMemo(
     () => products.filter((p) => p.status === "re-purchase needed").length,
@@ -30,29 +42,73 @@ export function ProductsView({
   const lowBulkStockCount = useMemo(() => products.filter(isLowBulkStock).length, [products]);
 
   const filtered = useMemo(() => {
+    let result = products;
+
     if (filter === "needs-reordering") {
-      return products.filter((p) => p.status === "re-purchase needed");
+      result = result.filter((p) => p.status === "re-purchase needed");
+    } else if (filter === "low-bulk-stock") {
+      result = result.filter(isLowBulkStock);
     }
-    if (filter === "low-bulk-stock") {
-      return products.filter(isLowBulkStock);
+
+    if (category !== ALL_CATEGORIES) {
+      result = result.filter((p) => p.category === category);
     }
-    return products;
-  }, [products, filter]);
+
+    const q = search.trim().toLowerCase();
+    if (q) {
+      result = result.filter(
+        (p) => p.name.toLowerCase().includes(q) || (p.item_id ?? "").toLowerCase().includes(q)
+      );
+    }
+
+    return result;
+  }, [products, filter, category, search]);
 
   return (
     <div className="space-y-4">
-      <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-        <TabsList>
-          <TabsTrigger value="all">All ({products.length})</TabsTrigger>
-          <TabsTrigger value="needs-reordering">
-            Needs reordering ({needsReorderingCount})
-          </TabsTrigger>
-          <TabsTrigger value="low-bulk-stock">
-            Low bulk stock ({lowBulkStockCount})
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-      <ProductsTable products={filtered} inMachinesByProduct={inMachinesByProduct} canDelete={canDelete} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+          <TabsList>
+            <TabsTrigger value="all">All ({products.length})</TabsTrigger>
+            <TabsTrigger value="needs-reordering">
+              Needs reordering ({needsReorderingCount})
+            </TabsTrigger>
+            <TabsTrigger value="low-bulk-stock">
+              Low bulk stock ({lowBulkStockCount})
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <div className="flex gap-2">
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="All categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_CATEGORIES}>All categories</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            placeholder="Search name or SKU..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-56"
+          />
+        </div>
+      </div>
+      {filtered.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No products match.</p>
+      ) : (
+        <ProductsTable
+          products={filtered}
+          inMachinesByProduct={inMachinesByProduct}
+          canDelete={canDelete}
+        />
+      )}
     </div>
   );
 }

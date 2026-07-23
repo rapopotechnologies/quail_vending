@@ -57,8 +57,9 @@ export function ProductFormDialog({ product }: { product?: Product }) {
           notes: product.notes ?? "",
           warehouse_qty: product.warehouse_qty,
           warehouse_par_level: product.warehouse_par_level,
+          units_per_case: product.units_per_case,
         }
-      : { name: "", status: "re-purchase needed", warehouse_qty: 0 },
+      : { name: "", status: "re-purchase needed", warehouse_qty: 0, units_per_case: 1 },
   });
 
   async function onSubmit(values: ProductValues) {
@@ -207,7 +208,7 @@ export function ProductFormDialog({ product }: { product?: Product }) {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="warehouse_qty">Bulk stock on hand</Label>
               <Input id="warehouse_qty" type="number" min={0} {...register("warehouse_qty")} />
@@ -218,6 +219,13 @@ export function ProductFormDialog({ product }: { product?: Product }) {
             <div className="space-y-2">
               <Label htmlFor="warehouse_par_level">Bulk reorder threshold</Label>
               <Input id="warehouse_par_level" type="number" min={0} {...register("warehouse_par_level")} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="units_per_case">Units per case</Label>
+              <Input id="units_per_case" type="number" min={1} {...register("units_per_case")} />
+              {errors.units_per_case && (
+                <p className="text-sm text-destructive">{errors.units_per_case.message}</p>
+              )}
             </div>
           </div>
 
