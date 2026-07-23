@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       machine_slots: {
@@ -40,6 +45,13 @@ export type Database = {
             columns: ["machine_id"]
             isOneToOne: false
             referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "machine_slots_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "public_location_impact"
             referencedColumns: ["id"]
           },
           {
@@ -119,6 +131,38 @@ export type Database = {
           status?: string
         }
         Relationships: []
+      }
+      product_lots: {
+        Row: {
+          expiry_date: string
+          id: string
+          product_id: string
+          qty: number
+          received_at: string
+        }
+        Insert: {
+          expiry_date: string
+          id?: string
+          product_id: string
+          qty?: number
+          received_at?: string
+        }
+        Update: {
+          expiry_date?: string
+          id?: string
+          product_id?: string
+          qty?: number
+          received_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_lots_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -276,6 +320,13 @@ export type Database = {
             referencedRelation: "machines"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "restock_events_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "public_location_impact"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sales: {
@@ -312,6 +363,13 @@ export type Database = {
             columns: ["machine_id"]
             isOneToOne: false
             referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "public_location_impact"
             referencedColumns: ["id"]
           },
           {

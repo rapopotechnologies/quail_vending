@@ -1,6 +1,7 @@
 import type { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   Activity,
+  ExpiringLot,
   LowBulkStockProduct,
   LowStockSlot,
   SaleRecord,
@@ -93,6 +94,67 @@ export async function fetchLowBulkStockProducts(
   return ((data ?? []) as unknown as RawProduct[]).filter(
     (p) => p.warehouse_qty <= (p.warehouse_par_level ?? 0)
   );
+}
+
+export async function fetchTotalOnHandByProduct(
+  supabase: SupabaseServerClient
+): Promise<Record<string, { name: string; totalOnHand: number }>> {
+  const [{ data: products }, { data: rawSlots }] = await Promise.all([
+    supabase.from("products").select("id, name, warehouse_qty"),
+    supabase
+      .from("machine_slots")
+      .select("product_id, stock_levels(current_qty)")
+      .not("product_id", "is", null),
+  ]);
+
+  type RawProduct = { id: string; name: string; warehouse_qty: number };
+  type RawSlot = { product_id: string; stock_levels: { current_qty: number } | null };
+
+  const inMachinesByProduct: Record<string, number> = {};
+  for (const s of (rawSlots ?? []) as unknown as RawSlot[]) {
+    inMachinesByProduct[s.product_id] =
+      (inMachinesByProduct[s.product_id] ?? 0) + (s.stock_levels?.current_qty ?? 0);
+  }
+
+  const result: Record<string, { name: string; totalOnHand: number }> = {};
+  for (const p of (products ?? []) as unknown as RawProduct[]) {
+    result[p.id] = {
+      name: p.name,
+      totalOnHand: p.warehouse_qty + (inMachinesByProduct[p.id] ?? 0),
+    };
+  }
+  return result;
+}
+
+export async function fetchExpiringLots(
+  supabase: SupabaseServerClient,
+  withinDays = 30
+): Promise<ExpiringLot[]> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() + withinDays);
+
+  const { data } = await supabase
+    .from("product_lots")
+    .select("id, product_id, qty, expiry_date, products(name)")
+    .gt("qty", 0)
+    .lte("expiry_date", cutoff.toISOString().slice(0, 10))
+    .order("expiry_date", { ascending: true });
+
+  type RawLot = {
+    id: string;
+    product_id: string;
+    qty: number;
+    expiry_date: string;
+    products: { name: string } | null;
+  };
+
+  return ((data ?? []) as unknown as RawLot[]).map((l) => ({
+    id: l.id,
+    product_id: l.product_id,
+    product_name: l.products?.name ?? "—",
+    qty: l.qty,
+    expiry_date: l.expiry_date,
+  }));
 }
 
 export async function fetchRecentActivity(

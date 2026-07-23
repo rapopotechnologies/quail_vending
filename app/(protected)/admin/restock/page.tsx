@@ -25,6 +25,7 @@ export default async function RestockPage({
       id: string;
       slot_label: string;
       capacity: number | null;
+      par_level: number | null;
       products: { name: string } | null;
       // stock_levels.machine_slot_id is unique, so PostgREST embeds this as
       // a single object, not an array.
@@ -35,6 +36,7 @@ export default async function RestockPage({
       id: s.id,
       slot_label: s.slot_label,
       capacity: s.capacity,
+      par_level: s.par_level,
       product_name: s.products?.name ?? null,
       current_qty: s.stock_levels?.current_qty ?? 0,
     }));

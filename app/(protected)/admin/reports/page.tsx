@@ -1,16 +1,20 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
+  fetchExpiringLots,
   fetchLowBulkStockProducts,
   fetchLowStockSlots,
   fetchSalesWithNames,
+  fetchTotalOnHandByProduct,
 } from "@/lib/reports/queries";
-import { revenueByMachine, revenueByProduct } from "@/lib/reports/aggregate";
+import { revenueByMachine, revenueByProduct, velocityByProduct } from "@/lib/reports/aggregate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RevenueBarChart } from "@/components/reports/revenue-bar-chart";
 import { ExportCsvButton } from "@/components/reports/export-csv-button";
 import { DateRangeSelect } from "@/components/reports/date-range-select";
 import { RANGE_OPTIONS, type RangeValue } from "@/lib/reports/date-range";
 import { LowStockList } from "@/components/dashboard/low-stock-list";
+import { ExpiringSoonList } from "@/components/dashboard/expiring-soon-list";
+import { DepletionForecast } from "@/components/reports/depletion-forecast";
 
 function sinceISOForRange(range: RangeValue): string | undefined {
   if (range === "all") return undefined;
@@ -31,15 +35,26 @@ export default async function ReportsPage({
 
   const supabase = await createSupabaseServerClient();
 
-  const [sales, slots, bulkProducts] = await Promise.all([
+  const [sales, slots, bulkProducts, totalOnHandByProduct, expiringLots] = await Promise.all([
     fetchSalesWithNames(supabase, sinceISOForRange(range)),
     fetchLowStockSlots(supabase),
     fetchLowBulkStockProducts(supabase),
+    fetchTotalOnHandByProduct(supabase),
+    fetchExpiringLots(supabase),
   ]);
 
   const byMachine = revenueByMachine(sales);
   const byProduct = revenueByProduct(sales).slice(0, 10);
   const rangeLabel = RANGE_OPTIONS.find((o) => o.value === range)?.label ?? "";
+
+  const depletionRows = velocityByProduct(sales)
+    .filter((v) => v.unitsPerDay > 0)
+    .map((v) => ({
+      ...v,
+      totalOnHand: totalOnHandByProduct[v.product_id]?.totalOnHand ?? 0,
+    }))
+    .sort((a, b) => a.totalOnHand / a.unitsPerDay - b.totalOnHand / b.unitsPerDay)
+    .slice(0, 10);
 
   return (
     <div className="space-y-6">
@@ -52,9 +67,24 @@ export default async function ReportsPage({
         </CardContent>
       </Card>
 
+      <ExpiringSoonList lots={expiringLots} />
+
       <div className="flex justify-end">
         <DateRangeSelect value={range} />
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Depletion forecast</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Based on the {rangeLabel.toLowerCase()} sales rate vs. total on hand (bulk + in
+            machines) — most urgent first.
+          </p>
+          <DepletionForecast rows={depletionRows} />
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <RevenueBarChart

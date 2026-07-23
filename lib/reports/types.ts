@@ -26,6 +26,14 @@ export type LowBulkStockProduct = {
   warehouse_par_level: number | null;
 };
 
+export type ExpiringLot = {
+  id: string;
+  product_id: string;
+  product_name: string;
+  qty: number;
+  expiry_date: string;
+};
+
 export type RestockActivity = {
   id: string;
   type: "restock";

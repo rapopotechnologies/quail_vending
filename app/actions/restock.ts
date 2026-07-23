@@ -4,6 +4,35 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { restockEventSchema, type RestockEventValues } from "@/lib/validations/restock";
 
+type SupabaseServerClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+
+// Draws down product_lots oldest-expiry-first (FIFO) to match a warehouse_qty
+// reduction of `qty`. Lots that hit 0 are deleted rather than left as
+// zero-qty rows. Pre-migration warehouse_qty has no backing lots, so this is
+// a best-effort sync - if there isn't enough lot qty on record, it just
+// drains what exists and stops (warehouse_qty is still the source of truth
+// for the aggregate number; lots only track expiry).
+async function consumeLotsFifo(supabase: SupabaseServerClient, productId: string, qty: number) {
+  let remaining = qty;
+  const { data: lots } = await supabase
+    .from("product_lots")
+    .select("id, qty")
+    .eq("product_id", productId)
+    .order("expiry_date", { ascending: true });
+
+  for (const lot of lots ?? []) {
+    if (remaining <= 0) break;
+    const used = Math.min(lot.qty, remaining);
+    remaining -= used;
+    const newQty = lot.qty - used;
+    if (newQty <= 0) {
+      await supabase.from("product_lots").delete().eq("id", lot.id);
+    } else {
+      await supabase.from("product_lots").update({ qty: newQty }).eq("id", lot.id);
+    }
+  }
+}
+
 export async function createRestockEvent(machineId: string, values: RestockEventValues) {
   const parsed = restockEventSchema.parse(values);
   const itemsToApply = parsed.items.filter((i) => i.qty_added > 0);
@@ -83,6 +112,8 @@ export async function createRestockEvent(machineId: string, values: RestockEvent
       .eq("id", productId);
 
     if (warehouseError) throw new Error(warehouseError.message);
+
+    await consumeLotsFifo(supabase, productId, qtyUsed);
   }
 
   revalidatePath("/admin/restock");

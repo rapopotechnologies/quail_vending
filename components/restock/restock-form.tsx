@@ -19,7 +19,13 @@ export type RestockSlot = {
   product_name: string | null;
   current_qty: number;
   capacity: number | null;
+  par_level: number | null;
 };
+
+function suggestedQty(slot: RestockSlot): number {
+  if (slot.par_level == null) return 0;
+  return Math.max(slot.par_level - slot.current_qty, 0);
+}
 
 export function RestockForm({ machineId, slots }: { machineId: string; slots: RestockSlot[] }) {
   const router = useRouter();
@@ -33,7 +39,7 @@ export function RestockForm({ machineId, slots }: { machineId: string; slots: Re
     resolver: zodResolver(restockEventSchema),
     defaultValues: {
       notes: "",
-      items: slots.map((s) => ({ machine_slot_id: s.id, qty_added: 0 })),
+      items: slots.map((s) => ({ machine_slot_id: s.id, qty_added: suggestedQty(s) })),
     },
   });
 
@@ -43,7 +49,7 @@ export function RestockForm({ machineId, slots }: { machineId: string; slots: Re
       toast.success("Restock logged");
       reset({
         notes: "",
-        items: slots.map((s) => ({ machine_slot_id: s.id, qty_added: 0 })),
+        items: slots.map((s) => ({ machine_slot_id: s.id, qty_added: suggestedQty(s) })),
       });
       router.refresh();
     } catch (err) {
@@ -82,6 +88,11 @@ export function RestockForm({ machineId, slots }: { machineId: string; slots: Re
                   {...register(`items.${index}.machine_slot_id`)}
                 />
                 <Input type="number" min={0} {...register(`items.${index}.qty_added`)} />
+                {slot.par_level != null && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Suggested: {suggestedQty(slot)} (to par {slot.par_level})
+                  </p>
+                )}
               </TableCell>
             </TableRow>
           ))}

@@ -42,7 +42,21 @@ export async function deleteProduct(id: string) {
   revalidatePath("/admin/products");
 }
 
-// Logs a bulk purchase (e.g. a Costco run) by adding to warehouse_qty.
+export async function bulkUpdateParLevel(ids: string[], parLevel: number) {
+  if (ids.length === 0) return;
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ warehouse_par_level: parLevel })
+    .in("id", ids);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/products");
+}
+
+// Logs a bulk purchase (e.g. a Costco run) by adding to warehouse_qty and
+// recording a lot (product_lots) with this purchase's expiry date, so the
+// batch can be tracked and drawn down oldest-expiry-first later.
 export async function recordPurchase(productId: string, values: RecordPurchaseValues) {
   const parsed = recordPurchaseSchema.parse(values);
   const supabase = await createSupabaseServerClient();
@@ -61,5 +75,13 @@ export async function recordPurchase(productId: string, values: RecordPurchaseVa
     .eq("id", productId);
 
   if (error) throw new Error(error.message);
+
+  const { error: lotError } = await supabase.from("product_lots").insert({
+    product_id: productId,
+    qty: parsed.qty,
+    expiry_date: parsed.expiry_date,
+  });
+
+  if (lotError) throw new Error(lotError.message);
   revalidatePath("/admin/products");
 }

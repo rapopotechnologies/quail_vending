@@ -11,6 +11,7 @@ import { recordPurchaseSchema, type RecordPurchaseValues } from "@/lib/validatio
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +27,12 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const perCase = product.units_per_case;
-  const byCase = perCase > 1;
+  const hasCases = perCase > 1;
+  // "Individual items" is always available - staff occasionally add loose
+  // stock (a partial case, an item bought separately) even for products
+  // normally purchased by the case.
+  const [mode, setMode] = useState<"crates" | "items">(hasCases ? "crates" : "items");
+  const byCase = mode === "crates";
 
   const {
     register,
@@ -36,7 +42,7 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
     formState: { errors, isSubmitting },
   } = useForm<RecordPurchaseValues>({
     resolver: zodResolver(recordPurchaseSchema),
-    defaultValues: { qty: 1 },
+    defaultValues: { qty: 1, expiry_date: "" },
   });
 
   const entered = watch("qty");
@@ -45,9 +51,9 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
   async function onSubmit(values: RecordPurchaseValues) {
     const unitsToAdd = byCase ? values.qty * perCase : values.qty;
     try {
-      await recordPurchase(product.id, { qty: unitsToAdd });
+      await recordPurchase(product.id, { qty: unitsToAdd, expiry_date: values.expiry_date });
       toast.success(`Added ${unitsToAdd} to bulk stock`);
-      reset({ qty: 1 });
+      reset({ qty: 1, expiry_date: "" });
       setOpen(false);
       router.refresh();
     } catch (err) {
@@ -67,16 +73,31 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
           <DialogTitle>Record a purchase</DialogTitle>
           <DialogDescription>
             {product.name} — currently {product.warehouse_qty} in bulk stock
-            {byCase && ` (${perCase} units/case)`}.
+            {hasCases && ` (${perCase} units/case)`}.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {hasCases && (
+            <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
+              <TabsList>
+                <TabsTrigger value="crates">Crates</TabsTrigger>
+                <TabsTrigger value="items">Individual items</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
           <div className="space-y-2">
-            <Label htmlFor="qty">{byCase ? "Cases bought" : "Qty bought"}</Label>
+            <Label htmlFor="qty">{byCase ? "Crates bought" : "Items bought"}</Label>
             <Input id="qty" type="number" min={1} autoFocus {...register("qty")} />
             {errors.qty && <p className="text-sm text-destructive">{errors.qty.message}</p>}
             {byCase && (
               <p className="text-sm text-muted-foreground">= {individualUnits} individual units</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="expiry_date">Expiry date</Label>
+            <Input id="expiry_date" type="date" {...register("expiry_date")} />
+            {errors.expiry_date && (
+              <p className="text-sm text-destructive">{errors.expiry_date.message}</p>
             )}
           </div>
           <DialogFooter>

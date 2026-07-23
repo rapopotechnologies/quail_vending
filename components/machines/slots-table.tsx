@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { deleteMachineSlot } from "@/app/actions/machine-slots";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { SlotFormDialog } from "@/components/machines/slot-form-dialog";
+import { LogSaleDialog } from "@/components/machines/log-sale-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -57,6 +58,13 @@ export function SlotsTable({
               </TableCell>
               <TableCell>{slot.par_level ?? "—"}</TableCell>
               <TableCell className="flex justify-end gap-2">
+                <LogSaleDialog
+                  machineId={machineId}
+                  slotId={slot.id}
+                  slotLabel={slot.slot_label}
+                  productName={slot.product_name}
+                  currentQty={slot.current_qty ?? 0}
+                />
                 <SlotFormDialog machineId={machineId} slot={slot} products={products} />
                 {canDelete && (
                   <DeleteConfirmButton

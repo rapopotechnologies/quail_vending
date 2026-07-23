@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductsTable, type ProductSortKey } from "@/components/products/products-table";
+import { BulkParLevelDialog } from "@/components/products/bulk-par-level-dialog";
 import type { SortDirection } from "@/components/shared/sortable-header";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -38,6 +39,28 @@ export function ProductsView({
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<ProductSortKey | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>("asc");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll(ids: string[]) {
+    setSelectedIds((prev) => {
+      const allSelected = ids.every((id) => prev.has(id));
+      if (allSelected) {
+        const next = new Set(prev);
+        ids.forEach((id) => next.delete(id));
+        return next;
+      }
+      return new Set([...prev, ...ids]);
+    });
+  }
 
   function handleSort(key: ProductSortKey) {
     if (sortKey === key) {
@@ -151,6 +174,17 @@ export function ProductsView({
           />
         </div>
       </div>
+      {selectedIds.size > 0 && (
+        <div className="flex items-center justify-between rounded-md border bg-muted/50 px-3 py-2">
+          <p className="text-sm text-muted-foreground">{selectedIds.size} selected</p>
+          <div className="flex gap-2">
+            <BulkParLevelDialog
+              productIds={Array.from(selectedIds)}
+              onDone={() => setSelectedIds(new Set())}
+            />
+          </div>
+        </div>
+      )}
       {filtered.length === 0 ? (
         <p className="text-sm text-muted-foreground">No products match.</p>
       ) : (
@@ -161,6 +195,9 @@ export function ProductsView({
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={handleSort}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+          onToggleSelectAll={toggleSelectAll}
         />
       )}
     </div>

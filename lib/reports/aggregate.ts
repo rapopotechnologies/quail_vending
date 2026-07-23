@@ -35,6 +35,31 @@ export function revenueByProduct(
   );
 }
 
+// Units sold per day, per product, averaged over the span the given sales
+// cover (oldest to newest sale in the array) - not a fixed window, so it
+// tracks whatever range the caller already scoped `sales` to.
+export function velocityByProduct(
+  sales: SaleRecord[]
+): { product_id: string; name: string; unitsPerDay: number }[] {
+  if (sales.length === 0) return [];
+
+  const times = sales.map((s) => new Date(s.sold_at).getTime());
+  const spanDays = Math.max((Math.max(...times) - Math.min(...times)) / (1000 * 60 * 60 * 24), 1);
+
+  const qtyByProduct = new Map<string, { name: string; qty: number }>();
+  for (const s of sales) {
+    const existing = qtyByProduct.get(s.product_id) ?? { name: s.product_name, qty: 0 };
+    existing.qty += s.qty;
+    qtyByProduct.set(s.product_id, existing);
+  }
+
+  return Array.from(qtyByProduct, ([product_id, v]) => ({
+    product_id,
+    name: v.name,
+    unitsPerDay: v.qty / spanDays,
+  }));
+}
+
 export function revenueByDay(sales: SaleRecord[]): { date: string; revenue: number }[] {
   const byDay = new Map<string, number>();
   for (const s of sales) {

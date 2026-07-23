@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
@@ -19,9 +20,11 @@ const NAV_ITEMS = [
 export function Navbar({
   fullName,
   role,
+  lowStockCount = 0,
 }: {
   fullName: string | null;
   role: "super_admin" | "staff";
+  lowStockCount?: number;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -48,6 +51,11 @@ export function Navbar({
               )}
             >
               {item.label}
+              {item.href === "/admin/dashboard" && lowStockCount > 0 && (
+                <Badge variant="destructive" className="ml-1.5 px-1.5 py-0 text-xs">
+                  {lowStockCount}
+                </Badge>
+              )}
             </Link>
           ))}
         </nav>

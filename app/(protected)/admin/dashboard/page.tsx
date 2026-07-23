@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
+  fetchExpiringLots,
   fetchLowBulkStockProducts,
   fetchLowStockSlots,
   fetchRecentActivity,
@@ -8,6 +9,7 @@ import {
 import { revenueSince, totalRevenue } from "@/lib/reports/aggregate";
 import { RevenueSummaryCards } from "@/components/dashboard/revenue-summary-cards";
 import { LowStockList } from "@/components/dashboard/low-stock-list";
+import { ExpiringSoonList } from "@/components/dashboard/expiring-soon-list";
 import { RecentActivity } from "@/components/dashboard/recent-activity";
 
 function daysAgoISO(days: number) {
@@ -19,10 +21,11 @@ function daysAgoISO(days: number) {
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient();
 
-  const [sales, slots, bulkProducts, activity] = await Promise.all([
+  const [sales, slots, bulkProducts, expiringLots, activity] = await Promise.all([
     fetchSalesWithNames(supabase),
     fetchLowStockSlots(supabase),
     fetchLowBulkStockProducts(supabase),
+    fetchExpiringLots(supabase),
     fetchRecentActivity(supabase, 10),
   ]);
 
@@ -37,6 +40,7 @@ export default async function DashboardPage() {
         allTime={totalRevenue(sales)}
       />
       <LowStockList slots={slots} bulkProducts={bulkProducts} limit={8} />
+      <ExpiringSoonList lots={expiringLots} limit={8} />
       <RecentActivity activity={activity} />
     </div>
   );
