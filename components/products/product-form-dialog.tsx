@@ -170,6 +170,11 @@ export function ProductFormDialog({ product }: { product?: Product }) {
                   <SelectItem value="discontinued">Discontinued</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Active / Re-purchase needed track bulk stock vs. reorder threshold
+                automatically once both are set — this only matters for marking
+                something Discontinued.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Pricing basis</Label>

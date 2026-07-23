@@ -21,9 +21,11 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = 
 
 export function ProductsTable({
   products,
+  inMachinesByProduct,
   canDelete,
 }: {
   products: Product[];
+  inMachinesByProduct: Record<string, number>;
   canDelete: boolean;
 }) {
   const router = useRouter();
@@ -41,6 +43,7 @@ export function ProductsTable({
           <TableHead>Category</TableHead>
           <TableHead>Sell price</TableHead>
           <TableHead>Bulk stock</TableHead>
+          <TableHead>Total on hand</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -50,6 +53,8 @@ export function ProductsTable({
           const lowBulkStock =
             product.warehouse_par_level != null &&
             product.warehouse_qty <= product.warehouse_par_level;
+          const inMachines = inMachinesByProduct[product.id] ?? 0;
+          const totalOnHand = product.warehouse_qty + inMachines;
           return (
             <TableRow key={product.id}>
               <TableCell className="font-medium">{product.name}</TableCell>
@@ -60,6 +65,9 @@ export function ProductsTable({
                 {product.warehouse_qty}
                 {product.warehouse_par_level != null && ` / ${product.warehouse_par_level} par`}
                 {lowBulkStock && " (low)"}
+              </TableCell>
+              <TableCell title={`${product.warehouse_qty} bulk + ${inMachines} across machines`}>
+                {totalOnHand}
               </TableCell>
               <TableCell>
                 <Badge variant={STATUS_VARIANT[product.status] ?? "secondary"}>{product.status}</Badge>

@@ -13,9 +13,11 @@ function isLowBulkStock(p: Product) {
 
 export function ProductsView({
   products,
+  inMachinesByProduct,
   canDelete,
 }: {
   products: Product[];
+  inMachinesByProduct: Record<string, number>;
   canDelete: boolean;
 }) {
   const [filter, setFilter] = useState<"all" | "needs-reordering" | "low-bulk-stock">("all");
@@ -50,7 +52,7 @@ export function ProductsView({
           </TabsTrigger>
         </TabsList>
       </Tabs>
-      <ProductsTable products={filtered} canDelete={canDelete} />
+      <ProductsTable products={filtered} inMachinesByProduct={inMachinesByProduct} canDelete={canDelete} />
     </div>
   );
 }
