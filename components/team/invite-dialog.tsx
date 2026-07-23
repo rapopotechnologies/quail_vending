@@ -19,7 +19,6 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function InviteDialog() {
   const [open, setOpen] = useState(false);
@@ -28,13 +27,11 @@ export function InviteDialog() {
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<InviteValues>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: { email: "", role: "staff" },
+    defaultValues: { email: "" },
   });
 
   async function onSubmit(values: InviteValues) {
@@ -63,21 +60,9 @@ export function InviteDialog() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" placeholder="name@example.com" {...register("email")} />
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label>Role</Label>
-            <Select value={watch("role")} onValueChange={(v) => setValue("role", v as InviteValues["role"])}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="staff">Staff</SelectItem>
-                <SelectItem value="super_admin">Super admin</SelectItem>
-              </SelectContent>
-            </Select>
             <p className="text-xs text-muted-foreground">
-              Everyone lands as Staff by default — Super admin can be granted here up front, or
-              changed later from the team list.
+              Invites always land as Staff. Super admin access can&apos;t be granted from the app —
+              it&apos;s a manual, out-of-app operation.
             </p>
           </div>
           <DialogFooter>

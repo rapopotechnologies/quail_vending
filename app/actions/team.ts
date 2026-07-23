@@ -14,29 +14,31 @@ async function requireSuperAdmin() {
   return profile;
 }
 
+// Invites always land as `staff` (the handle_new_user trigger's default) -
+// super_admin is never grantable from the app. Promoting someone requires a
+// manual, out-of-app operation (direct SQL/Supabase dashboard) so there's no
+// in-product path to mint elevated access.
 export async function inviteStaff(values: InviteValues) {
   await requireSuperAdmin();
   const parsed = inviteSchema.parse(values);
 
   const service = createSupabaseServiceClient();
-  const { data, error } = await service.auth.admin.inviteUserByEmail(parsed.email);
+  const { error } = await service.auth.admin.inviteUserByEmail(parsed.email);
   if (error) throw new Error(error.message);
-
-  if (parsed.role === "super_admin" && data.user) {
-    const { error: roleError } = await service
-      .from("profiles")
-      .update({ role: "super_admin" })
-      .eq("id", data.user.id);
-    if (roleError) throw new Error(roleError.message);
-  }
 
   revalidatePath("/admin/team");
 }
 
-export async function updateProfileRole(id: string, role: "staff" | "super_admin") {
-  await requireSuperAdmin();
+// The only role change the app allows is revoking super_admin down to
+// staff - never the reverse. See inviteStaff above for why.
+export async function demoteToStaff(id: string) {
+  const profile = await requireSuperAdmin();
+  if (id === profile.id) {
+    throw new Error("Can't change your own role here");
+  }
+
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.from("profiles").update({ role }).eq("id", id);
+  const { error } = await supabase.from("profiles").update({ role: "staff" }).eq("id", id);
 
   if (error) throw new Error(error.message);
   revalidatePath("/admin/team");

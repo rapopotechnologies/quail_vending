@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { updateProfileRole } from "@/app/actions/team";
+import { demoteToStaff } from "@/app/actions/team";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export type TeamMember = {
@@ -29,6 +29,7 @@ export function TeamTable({ members, currentUserId }: { members: TeamMember[]; c
           <TableHead>Name</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Role</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -42,31 +43,27 @@ export function TeamTable({ members, currentUserId }: { members: TeamMember[]; c
               </TableCell>
               <TableCell>{member.email || "—"}</TableCell>
               <TableCell>
-                {isSelf ? (
-                  <Badge variant={member.role === "super_admin" ? "default" : "secondary"}>
-                    {member.role}
-                  </Badge>
-                ) : (
-                  <Select
-                    value={member.role}
-                    onValueChange={async (v) => {
+                <Badge variant={member.role === "super_admin" ? "default" : "secondary"}>
+                  {member.role}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                {member.role === "super_admin" && !isSelf && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
                       try {
-                        await updateProfileRole(member.id, v as "staff" | "super_admin");
-                        toast.success("Role updated");
+                        await demoteToStaff(member.id);
+                        toast.success("Demoted to staff");
                         router.refresh();
                       } catch (err) {
                         toast.error(err instanceof Error ? err.message : "Failed to update role");
                       }
                     }}
                   >
-                    <SelectTrigger className="w-36">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="staff">Staff</SelectItem>
-                      <SelectItem value="super_admin">Super admin</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    Demote to staff
+                  </Button>
                 )}
               </TableCell>
             </TableRow>
