@@ -49,8 +49,18 @@ Apply new migrations via Supabase MCP (`apply_migration`) against project `tehoe
 
 **TypeScript note:** same pre-existing issue as resume_optimizer — the generated `Database` type (from `generate_typescript_types`) targets a newer `@supabase/postgrest-js` than the installed `@supabase/supabase-js@2.110.8`, which produces widespread `never` type inference on `.from(...)` query results (e.g. `machine.name` errors even though the row is a real object at runtime). `next.config.js` sets `typescript: { ignoreBuildErrors: true }` as the blanket fix. When actively touching a file with this problem, cast the query result with `as unknown as YourType` rather than leaving `never` in the file you touched (see the `RawSlot` cast in `app/(protected)/admin/machines/[id]/page.tsx` for the pattern).
 
+## Dashboard & reports
+
+`lib/reports/` holds shared, non-UI logic reused by both `/admin/dashboard` and `/admin/reports`:
+- `queries.ts` — server-side Supabase fetches: `fetchSalesWithNames`, `fetchLowStockSlots` (machine-slot level, filtered client-side against `par_level` after fetch), `fetchLowBulkStockProducts` (warehouse level), `fetchRecentActivity` (merges sales + restock_events, sorted by timestamp)
+- `aggregate.ts` — pure functions over `SaleRecord[]`: `totalRevenue`, `revenueSince`, `revenueByMachine`, `revenueByProduct`, `revenueByDay`
+
+`components/dashboard/low-stock-list.tsx` is shared between the dashboard's "low stock" section and the reports page's "restock due" section — same underlying data (machine slots at/under par, products at/under warehouse par), same component.
+
+Charts (`components/reports/revenue-bar-chart.tsx`) are Recharts, single-hue bars (`hsl(var(--primary))`) since each chart is one series by category — no legend needed. CSV export (`components/reports/export-csv-button.tsx`) builds the CSV client-side from already-fetched `SaleRecord[]` and triggers a download via `Blob` + an anchor `download` attribute — no server round-trip.
+
 ## Known gaps (tracked for later phases — see PLAN.md)
 
-- No restock/sales CRUD yet — `(protected)/admin/restock`, `/sales`, `/dashboard`, `/reports` pages are still placeholders (`<PagePlaceholder>`)
 - No invite-user server action yet — invites must be sent from the Supabase Dashboard (Authentication → Users → Invite) until a `super_admin`-gated invite form is built
 - Supabase Dashboard config still needed manually (no MCP/CLI tool covers this): Authentication → URL Configuration (Site URL + Redirect URLs → the deployed Vercel domain), and Authentication → Email Templates (Invite/Reset Password links → token-hash format pointing at `/auth/callback`)
+- Dashboard/reports fetch full sales history on every load (no pagination/date-range filter) — fine at current scale (2 machines, small team), revisit only if it accelerates well past the 3-year projection noted in PLAN.md §7

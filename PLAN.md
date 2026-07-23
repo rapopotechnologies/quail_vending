@@ -145,11 +145,11 @@ Component placement rules (from resume_optimizer's `CLAUDE.md`, adopted as-is):
 
 Each phase independently deployable to a Vercel preview — verify it live before moving on.
 
-1. **Scaffold** — `create-next-app` (Next 14/React 18 template), Tailwind v3 setup + hand-vendor the needed shadcn-style primitives into `components/ui/` (button, card, dialog, input, label, select, table, tabs, etc. — install individual `@radix-ui/react-*` packages as needed, no shadcn CLI), new Supabase project + local CLI link, base layout/nav, auth (login + `middleware.ts` with `PROTECTED_PREFIXES`/`PUBLIC_PATHS`), landing page skeleton.
-2. **Core CRUD** — machines, products, machine_slots tables/forms. Include a "needs reordering" view on products from day one.
-3. **Restocking flow** — log a restock event against a machine; updates `stock_levels`; shows fill % per slot.
-4. **Sales tracking** — manual entry form: machine → product → qty → done.
-5. **Dashboard & reports** — low-stock alerts, revenue/product charts (Recharts), restock-due list, CSV export.
+1. ✅ **Scaffold** — `create-next-app` (Next 14/React 18 template), Tailwind v3 setup + hand-vendor the needed shadcn-style primitives into `components/ui/` (button, card, dialog, input, label, select, table, tabs, etc. — install individual `@radix-ui/react-*` packages as needed, no shadcn CLI), new Supabase project + local CLI link, base layout/nav, auth (login + `middleware.ts` with `PROTECTED_PREFIXES`/`PUBLIC_PATHS`), landing page skeleton.
+2. ✅ **Core CRUD** — machines, products, machine_slots tables/forms. Includes a "needs reordering" view on products, plus bulk/warehouse stock tracking (`warehouse_qty`/`warehouse_par_level`, "Record purchase" quick action, "Low bulk stock" filter) added mid-Phase-2 based on real usage — see §4.
+3. ✅ **Restocking flow** — log a restock event against a machine; updates `stock_levels`; shows fill % per slot; also auto-draws down bulk warehouse stock for the product(s) used.
+4. ✅ **Sales tracking** — manual entry form: machine → product → qty → done; unit price auto-fills from the product's `sell_price`.
+5. ✅ **Dashboard & reports** — revenue summary cards (today/7d/30d/all-time), low-stock alerts (both per-machine and bulk warehouse), recent activity feed on `/admin/dashboard`; revenue-by-machine and top-sellers bar charts (Recharts), restock-due list, CSV export of all sales on `/admin/reports`.
 6. **Polish** — roles/permissions edge cases, empty states, mobile-friendly (staff restocking in the field), landing page final copy/design.
 
 ### 6.1 Known gotcha to build in from the start (learned from quail_vending_co)
