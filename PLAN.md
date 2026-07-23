@@ -86,7 +86,7 @@ Bulk/warehouse stock (`products.warehouse_qty` / `warehouse_par_level`): a simpl
 
 Migrations follow resume_optimizer's numbered convention (`001_initial_schema.sql`, `002_rls_policies.sql`, ...) rather than timestamp-prefixed filenames, each documented in `CLAUDE.md`'s migration log as it's added.
 
-If a current inventory CSV/spreadsheet exists (as it did for quail_vending_co), we'll write a one-time `scripts/seed-products.ts` to import it (mirrors resume_optimizer's `scripts/seed-*.ts` pattern) — flag if one exists so it can be dropped in during Phase 2.
+✅ Real inventory imported: `scripts/seed-products.ts` (mirrors resume_optimizer's `scripts/seed-*.ts` pattern; `npm run seed:products -- /path/to/export.csv`) parses the "Inventory Items Master List" CSV export and loaded 98 real products (41 Snacks, 37 Drinks - Healthy, 20 Drinks - Less Healthy), including real starting `warehouse_qty` for the 8 items already on hand. Re-runnable for future exports.
 
 ---
 
