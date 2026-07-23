@@ -16,9 +16,16 @@ const NAV_ITEMS = [
   { href: "/admin/leads", label: "Leads" },
 ];
 
-export function Navbar({ fullName }: { fullName: string | null }) {
+export function Navbar({
+  fullName,
+  role,
+}: {
+  fullName: string | null;
+  role: "super_admin" | "staff";
+}) {
   const pathname = usePathname();
   const router = useRouter();
+  const navItems = role === "super_admin" ? [...NAV_ITEMS, { href: "/admin/team", label: "Team" }] : NAV_ITEMS;
 
   async function signOut() {
     const supabase = createSupabaseBrowserClient();
@@ -31,7 +38,7 @@ export function Navbar({ fullName }: { fullName: string | null }) {
     <header className="border-b">
       <div className="container flex flex-col gap-2 py-2 sm:h-14 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-0">
         <nav className="-mx-4 flex items-center gap-4 overflow-x-auto px-4 text-sm sm:mx-0 sm:overflow-visible sm:px-0">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}

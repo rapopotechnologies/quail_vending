@@ -3,6 +3,17 @@
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function DeleteConfirmButton({
   onDelete,
@@ -15,8 +26,7 @@ export function DeleteConfirmButton({
 }) {
   const [pending, startTransition] = useTransition();
 
-  function handleClick() {
-    if (!window.confirm(confirmMessage)) return;
+  function handleConfirm() {
     startTransition(async () => {
       try {
         await onDelete();
@@ -27,8 +37,22 @@ export function DeleteConfirmButton({
   }
 
   return (
-    <Button variant="ghost" size="sm" onClick={handleClick} disabled={pending}>
-      {pending ? "Deleting..." : label}
-    </Button>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="sm" disabled={pending}>
+          {pending ? "Deleting..." : label}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogDescription>{confirmMessage}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleConfirm}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

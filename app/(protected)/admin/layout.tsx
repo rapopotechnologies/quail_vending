@@ -11,7 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-screen">
-      <Navbar fullName={profile.full_name} />
+      <Navbar fullName={profile.full_name} role={profile.role} />
       <main className="container py-8">{children}</main>
     </div>
   );
