@@ -30,22 +30,27 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 ```
 app/
-  (auth)/login/     admin sign-in (invite-only, no public signup)
+  (auth)/login/     admin sign-in (invite-only, no public signup, no public nav link to it)
   auth/callback/     invite/recovery token_hash exchange -> /set-password
   set-password/       one-time password set after accepting an invite
-  (protected)/admin/  gated admin routes: dashboard, machines, products, restock, sales, reports
-  page.tsx             public landing page
+  (protected)/admin/  gated admin routes: dashboard, machines, products, restock, sales, reports, leads
+  page.tsx             public marketing/landing page
 components/
-  landing/            public site components
+  marketing/          public site components (header, hero, locations, generosity leaderboard, inquiry form, footer)
+  leads/               admin leads table (partner inquiries from the landing page form)
   layout/, auth/       chrome + auth forms
   ui/                   vendored shadcn-style primitives
 lib/
   supabase/             client / server / service clients + generated types
   auth/                 current-user/profile lookup
+  reports/               dashboard/reports queries + aggregation + public-safe landing-page queries
   validations/           zod schemas
 supabase/migrations/     numbered SQL migrations
 ```
 
 Auth guard lives in `middleware.ts`, using a `PROTECTED_PREFIXES` allowlist
-scoped to `/admin`, `/set-password`, and `/api/admin` — the marketing page
-never touches Supabase.
+scoped to `/admin`, `/set-password`, and `/api/admin`. The marketing page is
+reachable without a session but does read a narrow, intentionally public
+Supabase view (`public_location_impact`) for its locations and community-impact
+sections — see `CLAUDE.md` for why that's safe (RLS still locks down the
+underlying `machines`/`sales` tables for anonymous requests).

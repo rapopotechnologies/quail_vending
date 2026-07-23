@@ -78,6 +78,42 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_inquiries: {
+        Row: {
+          business_name: string
+          contact_name: string
+          created_at: string
+          email: string
+          id: string
+          location: string | null
+          message: string | null
+          phone: string | null
+          status: string
+        }
+        Insert: {
+          business_name: string
+          contact_name: string
+          created_at?: string
+          email: string
+          id?: string
+          location?: string | null
+          message?: string | null
+          phone?: string | null
+          status?: string
+        }
+        Update: {
+          business_name?: string
+          contact_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          location?: string | null
+          message?: string | null
+          phone?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string | null
@@ -306,7 +342,15 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_location_impact: {
+        Row: {
+          charity_estimate: number | null
+          id: string | null
+          location: string | null
+          name: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       is_super_admin: { Args: never; Returns: boolean }

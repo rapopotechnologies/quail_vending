@@ -13,10 +13,10 @@ npm run lint           # ESLint
 ## Architecture
 
 **Next.js 14 App Router**, three route groups:
-- `app/(auth)/login` — public admin sign-in (invite-only, no public signup)
+- `app/(auth)/login` — public admin sign-in (invite-only, no public signup). No nav link to it from the public site; reachable via a small "Staff login" link in the marketing footer or a direct URL
 - `app/auth/callback` — exchanges Supabase invite/recovery `token_hash` links for a session, then redirects to `/set-password`
 - `app/(protected)/admin/` — all authenticated admin pages; layout (`app/(protected)/admin/layout.tsx`) fetches the current profile and renders `<Navbar>`
-- `app/page.tsx` — public landing page, top level (not a route group), never touches Supabase
+- `app/page.tsx` — public marketing/landing page, top level (not a route group). Reads public data via the normal server Supabase client (an unauthenticated request naturally resolves as the `anon` Postgres role — no separate client needed), scoped to what RLS/the `public_location_impact` view expose (see Database section)
 
 **Middleware** (`middleware.ts`) — validates the Supabase session on every request via `PROTECTED_PREFIXES` (`/admin`, `/set-password`, `/api/admin`) and redirects unauthenticated users to `/login`. Runs before any page or API route.
 
@@ -42,8 +42,12 @@ Migrations are in `supabase/migrations/`, applied in order:
 - **001_initial_schema** — `profiles`, `machines`, `products`, `machine_slots`, `stock_levels`, `restock_events` (+ `restock_event_items`), `sales`; `on_auth_user_created` trigger auto-creates a `profiles` row
 - **002_rls_policies** — RLS on all tables; `is_super_admin()` helper function; authenticated users get full CRUD on operational tables, `super_admin` required for deletes and editing historical `restock_events`/`sales`
 - **003_warehouse_stock** — adds `products.warehouse_qty` (bulk stock on hand, not yet loaded into a machine) and `warehouse_par_level` (reorder threshold). `warehouse_qty` is incremented by `recordPurchase` (`app/actions/products.ts`) and automatically decremented in `createRestockEvent` (`app/actions/restock.ts`) by the total qty used across all slots for each product in that restock event.
+- **004_public_landing_data** — `partner_inquiries` table (anon + authenticated can INSERT; only authenticated can SELECT/UPDATE; `super_admin` can DELETE) for the landing page's "work with us" form. `public_location_impact` view (name, location, `charity_estimate` = 10% of all-time revenue for `status = 'active'` machines) grants `SELECT` to `anon` — see below.
+- **005_restrict_handle_new_user_execute** — revokes direct RPC execute on the `handle_new_user` trigger function (Supabase security-advisor flag; it should only ever fire via the `on_auth_user_created` trigger).
 
 **Bulk/warehouse stock vs. machine stock:** two separate "low stock" concepts exist and are easy to conflate. `machine_slots.par_level` / `stock_levels.current_qty` is per-machine-slot (is this specific machine running low right now). `products.warehouse_par_level` / `warehouse_qty` is the bulk supply bought in one purchase (e.g. a Costco run) before any of it is loaded into a machine — this is what tells you when to go buy more, independent of whether any single machine is currently low. A restock event draws from the latter to top up the former.
+
+**`public_location_impact` is an intentional security-definer view** — Supabase's security advisor flags this (ERROR level: "Security Definer View") because it's usually accidental. Here it's the whole point: `machines` and `sales` are RLS-locked to `authenticated`, but the marketing page needs *some* public-safe signal for the "locations we operate" and "community impact leaderboard" sections. The view runs with its owner's privileges (default Postgres view behavior, bypassing the underlying RLS) and only ever `SELECT`s `id, name, location, charity_estimate` — never raw revenue, sales rows, or costs. If you add columns to this view, keep that constraint: nothing beyond what's safe for a fully public, unauthenticated visitor. `charity_estimate` is 10% of revenue as a stand-in for the company's "10% of profit to charity" pledge — true per-sale profit isn't tracked (no COGS ledger), so this is a labeled approximation, not exact accounting.
 
 Apply new migrations via Supabase MCP (`apply_migration`) against project `tehoezokpoiszuvbfgma`, then regenerate `lib/supabase/types.ts` via `generate_typescript_types`.
 
@@ -59,8 +63,16 @@ Apply new migrations via Supabase MCP (`apply_migration`) against project `tehoe
 
 Charts (`components/reports/revenue-bar-chart.tsx`) are Recharts, single-hue bars (`hsl(var(--primary))`) since each chart is one series by category — no legend needed. CSV export (`components/reports/export-csv-button.tsx`) builds the CSV client-side from already-fetched `SaleRecord[]` and triggers a download via `Blob` + an anchor `download` attribute — no server round-trip.
 
+## Marketing / landing page (`app/page.tsx`)
+
+Sections, top to bottom: `SiteHeader` (logo, anchor nav, deliberately no admin/login link), `Hero`, `ValuesSection` (icon-based — no real vending-machine photography yet, see Known gaps), `LocationsSection` (`#locations`, real active machines via `public_location_impact`), `GenerosityLeaderboard` (`#impact`, same view, ranked by `charity_estimate`, gold accent bars — `hsl(var(--gold))`, a separate token from the shadcn `accent` semantic color so it doesn't collide with admin-UI hover states), `InquiryForm` (`#partner`, client component, `submitInquiry` server action), `SiteFooter` (charity blurb + the one "Staff login" link in the whole public site, pointing at `/login`).
+
+Brand colors (`app/globals.css` `--primary`/`--gold` tokens) are derived from `public/quail-logo.png`'s teal/gold palette — keep new UI in sync with these rather than introducing new brand colors ad hoc.
+
 ## Known gaps (tracked for later phases — see PLAN.md)
 
 - No invite-user server action yet — invites must be sent from the Supabase Dashboard (Authentication → Users → Invite) until a `super_admin`-gated invite form is built
 - Supabase Dashboard config still needed manually (no MCP/CLI tool covers this): Authentication → URL Configuration (Site URL + Redirect URLs → the deployed Vercel domain), and Authentication → Email Templates (Invite/Reset Password links → token-hash format pointing at `/auth/callback`)
 - Dashboard/reports fetch full sales history on every load (no pagination/date-range filter) — fine at current scale (2 machines, small team), revisit only if it accelerates well past the 3-year projection noted in PLAN.md §7
+- No real vending-machine/product photography — `ValuesSection` uses lucide icons as placeholders until real photos are ready to drop in
+- No email/Slack notification when a `partner_inquiries` row is inserted — staff currently need to check `/admin/leads` manually

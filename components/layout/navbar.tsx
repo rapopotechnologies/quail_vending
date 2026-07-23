@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: "/admin/restock", label: "Restock" },
   { href: "/admin/sales", label: "Sales" },
   { href: "/admin/reports", label: "Reports" },
+  { href: "/admin/leads", label: "Leads" },
 ];
 
 export function Navbar({ fullName }: { fullName: string | null }) {
