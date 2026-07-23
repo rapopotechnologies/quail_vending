@@ -11,10 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { MachineFormDialog } from "@/components/machines/machine-form-dialog";
+import { SortableHeader, type SortDirection } from "@/components/shared/sortable-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Tables } from "@/lib/supabase/types";
 
 type Machine = Tables<"machines">;
+
+export type MachineSortKey = "name" | "status";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
   active: "default",
@@ -25,9 +28,15 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = 
 export function MachinesTable({
   machines,
   canDelete,
+  sortKey,
+  sortDir,
+  onSort,
 }: {
   machines: Machine[];
   canDelete: boolean;
+  sortKey: MachineSortKey | null;
+  sortDir: SortDirection;
+  onSort: (key: MachineSortKey) => void;
 }) {
   const router = useRouter();
 
@@ -40,10 +49,14 @@ export function MachinesTable({
       <TableHeader>
         <TableRow>
           <TableHead className="w-12"></TableHead>
-          <TableHead>Name</TableHead>
+          <TableHead>
+            <SortableHeader label="Name" sortKey="name" activeKey={sortKey} direction={sortDir} onSort={onSort} />
+          </TableHead>
           <TableHead>Location</TableHead>
           <TableHead>Address</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>
+            <SortableHeader label="Status" sortKey="status" activeKey={sortKey} direction={sortDir} onSort={onSort} />
+          </TableHead>
           <TableHead>Profit share</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>

@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MachinesTable } from "@/components/machines/machines-table";
+import { MachinesView } from "@/components/machines/machines-view";
 import { MachineFormDialog } from "@/components/machines/machine-form-dialog";
 
 export default async function MachinesPage() {
@@ -18,7 +18,7 @@ export default async function MachinesPage() {
         <MachineFormDialog />
       </CardHeader>
       <CardContent>
-        <MachinesTable
+        <MachinesView
           machines={machines ?? []}
           canDelete={profile?.role === "super_admin"}
         />

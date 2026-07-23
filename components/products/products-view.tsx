@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProductsTable } from "@/components/products/products-table";
+import { ProductsTable, type ProductSortKey } from "@/components/products/products-table";
+import type { SortDirection } from "@/components/shared/sortable-header";
 import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
@@ -35,6 +36,17 @@ export function ProductsView({
   const [filter, setFilter] = useState<"all" | "needs-reordering" | "low-bulk-stock">("all");
   const [category, setCategory] = useState(ALL_CATEGORIES);
   const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<ProductSortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDirection>("asc");
+
+  function handleSort(key: ProductSortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  }
 
   const categories = useMemo(
     () =>
@@ -69,8 +81,31 @@ export function ProductsView({
       );
     }
 
+    if (sortKey) {
+      const dir = sortDir === "asc" ? 1 : -1;
+      result = [...result].sort((a, b) => {
+        switch (sortKey) {
+          case "name":
+            return a.name.localeCompare(b.name) * dir;
+          case "sell_price":
+            return ((a.sell_price ?? 0) - (b.sell_price ?? 0)) * dir;
+          case "bulk_stock":
+            return (a.warehouse_qty - b.warehouse_qty) * dir;
+          case "total_on_hand": {
+            const aTotal = a.warehouse_qty + (inMachinesByProduct[a.id] ?? 0);
+            const bTotal = b.warehouse_qty + (inMachinesByProduct[b.id] ?? 0);
+            return (aTotal - bTotal) * dir;
+          }
+          case "status":
+            return a.status.localeCompare(b.status) * dir;
+          default:
+            return 0;
+        }
+      });
+    }
+
     return result;
-  }, [products, filter, category, search, inMachinesByProduct]);
+  }, [products, filter, category, search, inMachinesByProduct, sortKey, sortDir]);
 
   return (
     <div className="space-y-4">
@@ -123,6 +158,9 @@ export function ProductsView({
           products={filtered}
           inMachinesByProduct={inMachinesByProduct}
           canDelete={canDelete}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={handleSort}
         />
       )}
     </div>

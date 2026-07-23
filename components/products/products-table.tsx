@@ -10,10 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { ProductFormDialog } from "@/components/products/product-form-dialog";
 import { RecordPurchaseDialog } from "@/components/products/record-purchase-dialog";
+import { SortableHeader, type SortDirection } from "@/components/shared/sortable-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
+
+export type ProductSortKey = "name" | "sell_price" | "bulk_stock" | "total_on_hand" | "status";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
   active: "default",
@@ -25,10 +28,16 @@ export function ProductsTable({
   products,
   inMachinesByProduct,
   canDelete,
+  sortKey,
+  sortDir,
+  onSort,
 }: {
   products: Product[];
   inMachinesByProduct: Record<string, number>;
   canDelete: boolean;
+  sortKey: ProductSortKey | null;
+  sortDir: SortDirection;
+  onSort: (key: ProductSortKey) => void;
 }) {
   const router = useRouter();
 
@@ -41,13 +50,47 @@ export function ProductsTable({
       <TableHeader>
         <TableRow>
           <TableHead className="w-12"></TableHead>
-          <TableHead>Name</TableHead>
+          <TableHead>
+            <SortableHeader label="Name" sortKey="name" activeKey={sortKey} direction={sortDir} onSort={onSort} />
+          </TableHead>
           <TableHead className="w-20">SKU</TableHead>
           <TableHead className="w-40">Category</TableHead>
-          <TableHead className="w-24">Sell price</TableHead>
-          <TableHead className="w-36">Bulk stock</TableHead>
-          <TableHead className="w-28">Total on hand</TableHead>
-          <TableHead className="w-36">Status</TableHead>
+          <TableHead className="w-24">
+            <SortableHeader
+              label="Sell price"
+              sortKey="sell_price"
+              activeKey={sortKey}
+              direction={sortDir}
+              onSort={onSort}
+            />
+          </TableHead>
+          <TableHead className="w-36">
+            <SortableHeader
+              label="Bulk stock"
+              sortKey="bulk_stock"
+              activeKey={sortKey}
+              direction={sortDir}
+              onSort={onSort}
+            />
+          </TableHead>
+          <TableHead className="w-28">
+            <SortableHeader
+              label="Total on hand"
+              sortKey="total_on_hand"
+              activeKey={sortKey}
+              direction={sortDir}
+              onSort={onSort}
+            />
+          </TableHead>
+          <TableHead className="w-36">
+            <SortableHeader
+              label="Status"
+              sortKey="status"
+              activeKey={sortKey}
+              direction={sortDir}
+              onSort={onSort}
+            />
+          </TableHead>
           <TableHead className="w-64 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
