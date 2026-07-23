@@ -35,31 +35,29 @@ export function ProductsTable({
   }
 
   return (
-    <Table>
+    <Table className="table-fixed">
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
-          <TableHead>SKU</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>Sell price</TableHead>
-          <TableHead>Bulk stock</TableHead>
-          <TableHead>Total on hand</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+          <TableHead className="w-20">SKU</TableHead>
+          <TableHead className="w-40">Category</TableHead>
+          <TableHead className="w-24">Sell price</TableHead>
+          <TableHead className="w-36">Bulk stock</TableHead>
+          <TableHead className="w-28">Total on hand</TableHead>
+          <TableHead className="w-36">Status</TableHead>
+          <TableHead className="w-64 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {products.map((product) => {
-          const lowBulkStock =
-            product.warehouse_par_level != null &&
-            product.warehouse_qty <= product.warehouse_par_level;
+          const lowBulkStock = product.warehouse_qty <= (product.warehouse_par_level ?? 0);
           const inMachines = inMachinesByProduct[product.id] ?? 0;
           const totalOnHand = product.warehouse_qty + inMachines;
           return (
             <TableRow key={product.id}>
               <TableCell className="font-medium">{product.name}</TableCell>
-              <TableCell>{product.item_id || "—"}</TableCell>
-              <TableCell>{product.category || "—"}</TableCell>
+              <TableCell className="truncate">{product.item_id || "—"}</TableCell>
+              <TableCell className="truncate">{product.category || "—"}</TableCell>
               <TableCell>{product.sell_price != null ? `$${product.sell_price}` : "—"}</TableCell>
               <TableCell className={lowBulkStock ? "font-medium text-destructive" : undefined}>
                 {product.warehouse_qty}

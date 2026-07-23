@@ -78,10 +78,7 @@ export async function fetchLowStockSlots(supabase: SupabaseServerClient): Promis
 export async function fetchLowBulkStockProducts(
   supabase: SupabaseServerClient
 ): Promise<LowBulkStockProduct[]> {
-  const { data } = await supabase
-    .from("products")
-    .select("id, name, warehouse_qty, warehouse_par_level")
-    .not("warehouse_par_level", "is", null);
+  const { data } = await supabase.from("products").select("id, name, warehouse_qty, warehouse_par_level");
 
   type RawProduct = {
     id: string;
@@ -90,9 +87,12 @@ export async function fetchLowBulkStockProducts(
     warehouse_par_level: number | null;
   };
 
-  return ((data ?? []) as unknown as RawProduct[])
-    .filter((p) => p.warehouse_qty <= (p.warehouse_par_level as number))
-    .map((p) => ({ ...p, warehouse_par_level: p.warehouse_par_level as number }));
+  // A product with no par level set uses an implicit threshold of 0 - flag
+  // it only once it's truly out, same fallback as the products.status
+  // auto-sync trigger (see migration 009_default_par_level_zero.sql).
+  return ((data ?? []) as unknown as RawProduct[]).filter(
+    (p) => p.warehouse_qty <= (p.warehouse_par_level ?? 0)
+  );
 }
 
 export async function fetchRecentActivity(

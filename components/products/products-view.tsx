@@ -12,7 +12,7 @@ type Product = Tables<"products">;
 const ALL_CATEGORIES = "__all__";
 
 function isLowBulkStock(p: Product) {
-  return p.warehouse_par_level != null && p.warehouse_qty <= p.warehouse_par_level;
+  return p.warehouse_qty <= (p.warehouse_par_level ?? 0);
 }
 
 export function ProductsView({

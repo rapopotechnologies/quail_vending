@@ -36,7 +36,7 @@ export default async function DashboardPage() {
         last30Days={revenueSince(sales, daysAgoISO(30))}
         allTime={totalRevenue(sales)}
       />
-      <LowStockList slots={slots} bulkProducts={bulkProducts} />
+      <LowStockList slots={slots} bulkProducts={bulkProducts} limit={8} />
       <RecentActivity activity={activity} />
     </div>
   );

@@ -23,7 +23,7 @@ export type LowBulkStockProduct = {
   id: string;
   name: string;
   warehouse_qty: number;
-  warehouse_par_level: number;
+  warehouse_par_level: number | null;
 };
 
 export type RestockActivity = {
