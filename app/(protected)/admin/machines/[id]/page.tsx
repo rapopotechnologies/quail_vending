@@ -27,7 +27,9 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
 
   type RawSlot = Record<string, unknown> & {
     products: { name: string } | null;
-    stock_levels: { current_qty: number }[];
+    // stock_levels.machine_slot_id is unique, so PostgREST embeds this as a
+    // single object, not an array.
+    stock_levels: { current_qty: number } | null;
   };
 
   const enrichedSlots: SlotWithStock[] = ((slots ?? []) as unknown as RawSlot[]).map((s) => {
@@ -35,7 +37,7 @@ export default async function MachineDetailPage({ params }: { params: Promise<{ 
     return {
       ...(rest as unknown as SlotWithStock),
       product_name: products?.name ?? null,
-      current_qty: stock_levels?.[0]?.current_qty ?? 0,
+      current_qty: stock_levels?.current_qty ?? 0,
     };
   });
 
