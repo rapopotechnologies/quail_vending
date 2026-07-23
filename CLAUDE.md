@@ -41,6 +41,9 @@ npm run lint           # ESLint
 Migrations are in `supabase/migrations/`, applied in order:
 - **001_initial_schema** — `profiles`, `machines`, `products`, `machine_slots`, `stock_levels`, `restock_events` (+ `restock_event_items`), `sales`; `on_auth_user_created` trigger auto-creates a `profiles` row
 - **002_rls_policies** — RLS on all tables; `is_super_admin()` helper function; authenticated users get full CRUD on operational tables, `super_admin` required for deletes and editing historical `restock_events`/`sales`
+- **003_warehouse_stock** — adds `products.warehouse_qty` (bulk stock on hand, not yet loaded into a machine) and `warehouse_par_level` (reorder threshold). `warehouse_qty` is incremented by `recordPurchase` (`app/actions/products.ts`) and automatically decremented in `createRestockEvent` (`app/actions/restock.ts`) by the total qty used across all slots for each product in that restock event.
+
+**Bulk/warehouse stock vs. machine stock:** two separate "low stock" concepts exist and are easy to conflate. `machine_slots.par_level` / `stock_levels.current_qty` is per-machine-slot (is this specific machine running low right now). `products.warehouse_par_level` / `warehouse_qty` is the bulk supply bought in one purchase (e.g. a Costco run) before any of it is loaded into a machine — this is what tells you when to go buy more, independent of whether any single machine is currently low. A restock event draws from the latter to top up the former.
 
 Apply new migrations via Supabase MCP (`apply_migration`) against project `tehoezokpoiszuvbfgma`, then regenerate `lib/supabase/types.ts` via `generate_typescript_types`.
 

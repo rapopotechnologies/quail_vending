@@ -7,6 +7,7 @@ import { deleteProduct } from "@/app/actions/products";
 import { Badge } from "@/components/ui/badge";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { ProductFormDialog } from "@/components/products/product-form-dialog";
+import { RecordPurchaseDialog } from "@/components/products/record-purchase-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -39,35 +40,47 @@ export function ProductsTable({
           <TableHead>SKU</TableHead>
           <TableHead>Category</TableHead>
           <TableHead>Sell price</TableHead>
+          <TableHead>Bulk stock</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {products.map((product) => (
-          <TableRow key={product.id}>
-            <TableCell className="font-medium">{product.name}</TableCell>
-            <TableCell>{product.item_id || "—"}</TableCell>
-            <TableCell>{product.category || "—"}</TableCell>
-            <TableCell>{product.sell_price != null ? `$${product.sell_price}` : "—"}</TableCell>
-            <TableCell>
-              <Badge variant={STATUS_VARIANT[product.status] ?? "secondary"}>{product.status}</Badge>
-            </TableCell>
-            <TableCell className="flex justify-end gap-2">
-              <ProductFormDialog product={product} />
-              {canDelete && (
-                <DeleteConfirmButton
-                  confirmMessage={`Delete "${product.name}"? This can't be undone.`}
-                  onDelete={async () => {
-                    await deleteProduct(product.id);
-                    toast.success("Product deleted");
-                    router.refresh();
-                  }}
-                />
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
+        {products.map((product) => {
+          const lowBulkStock =
+            product.warehouse_par_level != null &&
+            product.warehouse_qty <= product.warehouse_par_level;
+          return (
+            <TableRow key={product.id}>
+              <TableCell className="font-medium">{product.name}</TableCell>
+              <TableCell>{product.item_id || "—"}</TableCell>
+              <TableCell>{product.category || "—"}</TableCell>
+              <TableCell>{product.sell_price != null ? `$${product.sell_price}` : "—"}</TableCell>
+              <TableCell className={lowBulkStock ? "font-medium text-destructive" : undefined}>
+                {product.warehouse_qty}
+                {product.warehouse_par_level != null && ` / ${product.warehouse_par_level} par`}
+                {lowBulkStock && " (low)"}
+              </TableCell>
+              <TableCell>
+                <Badge variant={STATUS_VARIANT[product.status] ?? "secondary"}>{product.status}</Badge>
+              </TableCell>
+              <TableCell className="flex justify-end gap-2">
+                <RecordPurchaseDialog product={product} />
+                <ProductFormDialog product={product} />
+                {canDelete && (
+                  <DeleteConfirmButton
+                    confirmMessage={`Delete "${product.name}"? This can't be undone.`}
+                    onDelete={async () => {
+                      await deleteProduct(product.id);
+                      toast.success("Product deleted");
+                      router.refresh();
+                    }}
+                  />
+                )}
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

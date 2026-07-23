@@ -53,6 +53,39 @@ export async function createRestockEvent(machineId: string, values: RestockEvent
     if (stockError) throw new Error(stockError.message);
   }
 
+  // Filling a machine slot draws from the bulk stock already on hand, so
+  // reduce warehouse_qty for each product involved by the total qty used.
+  const { data: slots } = await supabase
+    .from("machine_slots")
+    .select("id, product_id")
+    .in(
+      "id",
+      itemsToApply.map((i) => i.machine_slot_id)
+    );
+
+  const qtyByProduct = new Map<string, number>();
+  for (const item of itemsToApply) {
+    const productId = slots?.find((s) => s.id === item.machine_slot_id)?.product_id;
+    if (!productId) continue;
+    qtyByProduct.set(productId, (qtyByProduct.get(productId) ?? 0) + item.qty_added);
+  }
+
+  for (const [productId, qtyUsed] of qtyByProduct) {
+    const { data: product } = await supabase
+      .from("products")
+      .select("warehouse_qty")
+      .eq("id", productId)
+      .single();
+
+    const { error: warehouseError } = await supabase
+      .from("products")
+      .update({ warehouse_qty: Math.max(0, (product?.warehouse_qty ?? 0) - qtyUsed) })
+      .eq("id", productId);
+
+    if (warehouseError) throw new Error(warehouseError.message);
+  }
+
   revalidatePath("/admin/restock");
   revalidatePath(`/admin/machines/${machineId}`);
+  revalidatePath("/admin/products");
 }

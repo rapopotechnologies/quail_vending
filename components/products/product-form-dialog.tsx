@@ -55,8 +55,10 @@ export function ProductFormDialog({ product }: { product?: Product }) {
           pricing_basis: product.pricing_basis as ProductValues["pricing_basis"],
           product_url: product.product_url ?? "",
           notes: product.notes ?? "",
+          warehouse_qty: product.warehouse_qty,
+          warehouse_par_level: product.warehouse_par_level,
         }
-      : { name: "", status: "re-purchase needed" },
+      : { name: "", status: "re-purchase needed", warehouse_qty: 0 },
   });
 
   async function onSubmit(values: ProductValues) {
@@ -197,6 +199,20 @@ export function ProductFormDialog({ product }: { product?: Product }) {
               {errors.product_url && (
                 <p className="text-sm text-destructive">{errors.product_url.message}</p>
               )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="warehouse_qty">Bulk stock on hand</Label>
+              <Input id="warehouse_qty" type="number" min={0} {...register("warehouse_qty")} />
+              {errors.warehouse_qty && (
+                <p className="text-sm text-destructive">{errors.warehouse_qty.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="warehouse_par_level">Bulk reorder threshold</Label>
+              <Input id="warehouse_par_level" type="number" min={0} {...register("warehouse_par_level")} />
             </div>
           </div>
 

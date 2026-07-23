@@ -96,6 +96,8 @@ export type Database = {
           size_unit_oz: number | null
           source_vendor: string | null
           status: string
+          warehouse_par_level: number | null
+          warehouse_qty: number
         }
         Insert: {
           category?: string | null
@@ -114,6 +116,8 @@ export type Database = {
           size_unit_oz?: number | null
           source_vendor?: string | null
           status?: string
+          warehouse_par_level?: number | null
+          warehouse_qty?: number
         }
         Update: {
           category?: string | null
@@ -132,6 +136,8 @@ export type Database = {
           size_unit_oz?: number | null
           source_vendor?: string | null
           status?: string
+          warehouse_par_level?: number | null
+          warehouse_qty?: number
         }
         Relationships: []
       }

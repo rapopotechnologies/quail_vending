@@ -7,6 +7,10 @@ import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
 
+function isLowBulkStock(p: Product) {
+  return p.warehouse_par_level != null && p.warehouse_qty <= p.warehouse_par_level;
+}
+
 export function ProductsView({
   products,
   canDelete,
@@ -14,20 +18,24 @@ export function ProductsView({
   products: Product[];
   canDelete: boolean;
 }) {
-  const [filter, setFilter] = useState<"all" | "needs-reordering">("all");
+  const [filter, setFilter] = useState<"all" | "needs-reordering" | "low-bulk-stock">("all");
 
   const needsReorderingCount = useMemo(
     () => products.filter((p) => p.status === "re-purchase needed").length,
     [products]
   );
 
-  const filtered = useMemo(
-    () =>
-      filter === "needs-reordering"
-        ? products.filter((p) => p.status === "re-purchase needed")
-        : products,
-    [products, filter]
-  );
+  const lowBulkStockCount = useMemo(() => products.filter(isLowBulkStock).length, [products]);
+
+  const filtered = useMemo(() => {
+    if (filter === "needs-reordering") {
+      return products.filter((p) => p.status === "re-purchase needed");
+    }
+    if (filter === "low-bulk-stock") {
+      return products.filter(isLowBulkStock);
+    }
+    return products;
+  }, [products, filter]);
 
   return (
     <div className="space-y-4">
@@ -36,6 +44,9 @@ export function ProductsView({
           <TabsTrigger value="all">All ({products.length})</TabsTrigger>
           <TabsTrigger value="needs-reordering">
             Needs reordering ({needsReorderingCount})
+          </TabsTrigger>
+          <TabsTrigger value="low-bulk-stock">
+            Low bulk stock ({lowBulkStockCount})
           </TabsTrigger>
         </TabsList>
       </Tabs>

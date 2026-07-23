@@ -69,7 +69,10 @@ Reuse the same schema design validated in quail_vending_co's `ADMIN_APP_PLAN.md`
 machines            -- name, location, profit_share_pct, status
 products            -- item_id (SKU), name, category, size, costs by channel,
                         sell_price, projected_sell_price, status, source_vendor,
-                        pricing_basis, product_url, notes
+                        pricing_basis, product_url, notes,
+                        warehouse_qty, warehouse_par_level (bulk/on-hand stock
+                        bought in a Costco run etc., before it's loaded into
+                        any machine — separate from each machine's par_level)
 machine_slots       -- machine_id, slot_label, product_id, capacity, par_level
 stock_levels        -- machine_slot_id, current_qty, last_counted_at
 restock_events (+ restock_event_items)  -- who/when/what/how much
@@ -78,6 +81,8 @@ profiles            -- id -> auth.users, full_name, role (super_admin | staff)
 ```
 
 Row Level Security: authenticated users only; `super_admin` required for destructive actions and inviting/managing users; `staff` for day-to-day CRUD.
+
+Bulk/warehouse stock (`products.warehouse_qty` / `warehouse_par_level`): a simple running total per product rather than purchase lots, added via a "Record purchase" quick action and automatically drawn down when a restock event fills a machine slot (filling a machine always comes from stock already on hand). Products view has a "Low bulk stock" filter alongside the existing "Needs reordering" one, so a bulk-buy run can be planned proactively instead of discovering it's out when a machine runs dry.
 
 Migrations follow resume_optimizer's numbered convention (`001_initial_schema.sql`, `002_rls_policies.sql`, ...) rather than timestamp-prefixed filenames, each documented in `CLAUDE.md`'s migration log as it's added.
 

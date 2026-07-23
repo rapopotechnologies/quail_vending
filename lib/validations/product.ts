@@ -16,6 +16,8 @@ export const productSchema = z.object({
   pricing_basis: z.enum(["pickup", "delivered"]).optional().nullable(),
   product_url: z.string().url().optional().or(z.literal("")),
   notes: z.string().optional(),
+  warehouse_qty: z.coerce.number().int().min(0).default(0),
+  warehouse_par_level: optionalNumber,
 });
 
 export type ProductValues = z.infer<typeof productSchema>;
