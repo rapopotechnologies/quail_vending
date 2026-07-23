@@ -90,7 +90,7 @@ export function ProductFormDialog({ product }: { product?: Product }) {
           <DialogTitle>{isEdit ? "Edit product" : "Add product"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input id="name" {...register("name")} />
@@ -102,7 +102,7 @@ export function ProductFormDialog({ product }: { product?: Product }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
               <Input id="category" placeholder="Snacks, Drinks - Healthy, ..." {...register("category")} />
@@ -113,7 +113,7 @@ export function ProductFormDialog({ product }: { product?: Product }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="pickup_unit_cost">Pickup cost</Label>
               <Input id="pickup_unit_cost" type="number" step="0.01" {...register("pickup_unit_cost")} />
@@ -138,7 +138,7 @@ export function ProductFormDialog({ product }: { product?: Product }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="sell_price">Sell price</Label>
               <Input id="sell_price" type="number" step="0.01" {...register("sell_price")} />
@@ -154,7 +154,7 @@ export function ProductFormDialog({ product }: { product?: Product }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>Status</Label>
               <Select
@@ -188,7 +188,7 @@ export function ProductFormDialog({ product }: { product?: Product }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="source_vendor">Source vendor</Label>
               <Input id="source_vendor" placeholder="Costco Business, gopuff, ..." {...register("source_vendor")} />
@@ -202,7 +202,7 @@ export function ProductFormDialog({ product }: { product?: Product }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="warehouse_qty">Bulk stock on hand</Label>
               <Input id="warehouse_qty" type="number" min={0} {...register("warehouse_qty")} />

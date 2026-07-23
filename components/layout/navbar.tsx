@@ -29,14 +29,14 @@ export function Navbar({ fullName }: { fullName: string | null }) {
 
   return (
     <header className="border-b">
-      <div className="container flex h-14 items-center justify-between">
-        <nav className="flex items-center gap-4 text-sm">
+      <div className="container flex flex-col gap-2 py-2 sm:h-14 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:py-0">
+        <nav className="-mx-4 flex items-center gap-4 overflow-x-auto px-4 text-sm sm:mx-0 sm:overflow-visible sm:px-0">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "text-muted-foreground transition-colors hover:text-foreground",
+                "shrink-0 text-muted-foreground transition-colors hover:text-foreground",
                 pathname.startsWith(item.href) && "font-medium text-foreground"
               )}
             >
@@ -44,8 +44,8 @@ export function Navbar({ fullName }: { fullName: string | null }) {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          {fullName && <span>{fullName}</span>}
+        <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground sm:justify-end">
+          {fullName && <span className="truncate">{fullName}</span>}
           <Button variant="ghost" size="sm" onClick={signOut}>
             Sign out
           </Button>
