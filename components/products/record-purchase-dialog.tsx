@@ -26,13 +26,13 @@ import type { Tables } from "@/lib/supabase/types";
 export function RecordPurchaseDialog({ product }: { product: Tables<"products"> }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
-  const perCase = product.units_per_case;
-  const hasCases = perCase > 1;
-  // "Individual items" is always available - staff occasionally add loose
-  // stock (a partial case, an item bought separately) even for products
-  // normally purchased by the case.
-  const [mode, setMode] = useState<"crates" | "items">(hasCases ? "crates" : "items");
+  const hasSavedCaseSize = product.units_per_case > 1;
+  // Crates vs. individual items is always offered - even products with no
+  // saved case size (units_per_case of 1) might still be bought by the case
+  // occasionally, and staff can type the case size in on the spot.
+  const [mode, setMode] = useState<"crates" | "items">(hasSavedCaseSize ? "crates" : "items");
   const byCase = mode === "crates";
+  const [caseSize, setCaseSize] = useState(hasSavedCaseSize ? product.units_per_case : 1);
 
   const {
     register,
@@ -46,10 +46,13 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
   });
 
   const entered = watch("qty");
-  const individualUnits = byCase ? Math.max(0, Math.trunc(entered || 0)) * perCase : entered;
+  const effectiveCaseSize = Math.max(1, Math.trunc(caseSize || 1));
+  const individualUnits = byCase
+    ? Math.max(0, Math.trunc(entered || 0)) * effectiveCaseSize
+    : entered;
 
   async function onSubmit(values: RecordPurchaseValues) {
-    const unitsToAdd = byCase ? values.qty * perCase : values.qty;
+    const unitsToAdd = byCase ? values.qty * effectiveCaseSize : values.qty;
     try {
       await recordPurchase(product.id, { qty: unitsToAdd, expiry_date: values.expiry_date });
       toast.success(`Added ${unitsToAdd} to bulk stock`);
@@ -74,17 +77,33 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
           <DialogDescription>
             Add newly purchased stock (e.g. a Costco run) to {product.name}&apos;s bulk warehouse
             supply — currently {product.warehouse_qty} in stock
-            {hasCases && ` (${perCase} units/case)`}.
+            {hasSavedCaseSize && ` (${product.units_per_case} units/case)`}.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {hasCases && (
-            <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
-              <TabsList>
-                <TabsTrigger value="crates">Crates</TabsTrigger>
-                <TabsTrigger value="items">Individual items</TabsTrigger>
-              </TabsList>
-            </Tabs>
+          <Tabs value={mode} onValueChange={(v) => setMode(v as typeof mode)}>
+            <TabsList>
+              <TabsTrigger value="crates">Crates</TabsTrigger>
+              <TabsTrigger value="items">Individual items</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {byCase && (
+            <div className="space-y-2">
+              <Label htmlFor="case-size">Units per case</Label>
+              <Input
+                id="case-size"
+                type="number"
+                min={1}
+                value={caseSize}
+                onChange={(e) => setCaseSize(Number(e.target.value))}
+              />
+              {!hasSavedCaseSize && (
+                <p className="text-sm text-muted-foreground">
+                  This product has no saved case size — set one here just for this purchase, or
+                  save it permanently via Edit.
+                </p>
+              )}
+            </div>
           )}
           <div className="space-y-2">
             <Label htmlFor="qty">{byCase ? "Crates bought" : "Items bought"}</Label>
