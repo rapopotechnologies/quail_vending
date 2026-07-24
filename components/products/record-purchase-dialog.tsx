@@ -42,7 +42,7 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
     formState: { errors, isSubmitting },
   } = useForm<RecordPurchaseValues>({
     resolver: zodResolver(recordPurchaseSchema),
-    defaultValues: { qty: 1, expiry_date: "" },
+    defaultValues: { qty: 1, expiry_date: "", unit_cost: undefined },
   });
 
   const entered = watch("qty");
@@ -53,10 +53,19 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
 
   async function onSubmit(values: RecordPurchaseValues) {
     const unitsToAdd = byCase ? values.qty * effectiveCaseSize : values.qty;
+    // The price field is entered per whatever the staff member is buying in
+    // (per crate or per item) - normalize to per-individual-unit before
+    // storing, since that's what warehouse_qty and everything else uses.
+    const perUnitCost =
+      values.unit_cost != null ? values.unit_cost / (byCase ? effectiveCaseSize : 1) : undefined;
     try {
-      await recordPurchase(product.id, { qty: unitsToAdd, expiry_date: values.expiry_date });
+      await recordPurchase(product.id, {
+        qty: unitsToAdd,
+        expiry_date: values.expiry_date,
+        unit_cost: perUnitCost,
+      });
       toast.success(`Added ${unitsToAdd} to bulk stock`);
-      reset({ qty: 1, expiry_date: "" });
+      reset({ qty: 1, expiry_date: "", unit_cost: undefined });
       setOpen(false);
       router.refresh();
     } catch (err) {
@@ -118,6 +127,22 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
             <Input id="expiry_date" type="date" {...register("expiry_date")} />
             {errors.expiry_date && (
               <p className="text-sm text-destructive">{errors.expiry_date.message}</p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="unit_cost">
+              Price paid {byCase ? "per crate" : "per item"} (optional)
+            </Label>
+            <Input
+              id="unit_cost"
+              type="number"
+              step="0.01"
+              min={0}
+              placeholder="Not tracked"
+              {...register("unit_cost")}
+            />
+            {errors.unit_cost && (
+              <p className="text-sm text-destructive">{errors.unit_cost.message}</p>
             )}
           </div>
           <DialogFooter>

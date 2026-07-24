@@ -109,6 +109,7 @@ export async function recordPurchase(productId: string, values: RecordPurchaseVa
     product_id: productId,
     qty: parsed.qty,
     expiry_date: parsed.expiry_date,
+    unit_cost: parsed.unit_cost ?? null,
   });
 
   if (lotError) throw new Error(lotError.message);

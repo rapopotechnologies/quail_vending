@@ -90,6 +90,7 @@ export type Database = {
           product_id: string
           qty: number
           received_at: string
+          unit_cost: number | null
         }
         Insert: {
           expiry_date: string
@@ -97,6 +98,7 @@ export type Database = {
           product_id: string
           qty?: number
           received_at?: string
+          unit_cost?: number | null
         }
         Update: {
           expiry_date?: string
@@ -104,6 +106,7 @@ export type Database = {
           product_id?: string
           qty?: number
           received_at?: string
+          unit_cost?: number | null
         }
         Relationships: [
           {
