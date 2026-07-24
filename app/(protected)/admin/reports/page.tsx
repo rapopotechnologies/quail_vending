@@ -2,9 +2,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   fetchExpiringLots,
   fetchLowBulkStockProducts,
-  fetchLowStockSlots,
   fetchSalesWithNames,
-  fetchTotalOnHandByProduct,
+  fetchWarehouseQtyByProduct,
 } from "@/lib/reports/queries";
 import { revenueByMachine, revenueByProduct, velocityByProduct } from "@/lib/reports/aggregate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,11 +34,10 @@ export default async function ReportsPage({
 
   const supabase = await createSupabaseServerClient();
 
-  const [sales, slots, bulkProducts, totalOnHandByProduct, expiringLots] = await Promise.all([
+  const [sales, bulkProducts, warehouseQtyByProduct, expiringLots] = await Promise.all([
     fetchSalesWithNames(supabase, sinceISOForRange(range)),
-    fetchLowStockSlots(supabase),
     fetchLowBulkStockProducts(supabase),
-    fetchTotalOnHandByProduct(supabase),
+    fetchWarehouseQtyByProduct(supabase),
     fetchExpiringLots(supabase),
   ]);
 
@@ -51,7 +49,7 @@ export default async function ReportsPage({
     .filter((v) => v.unitsPerDay > 0)
     .map((v) => ({
       ...v,
-      totalOnHand: totalOnHandByProduct[v.product_id]?.totalOnHand ?? 0,
+      totalOnHand: warehouseQtyByProduct[v.product_id] ?? 0,
     }))
     .sort((a, b) => a.totalOnHand / a.unitsPerDay - b.totalOnHand / b.unitsPerDay)
     .slice(0, 10);
@@ -63,7 +61,7 @@ export default async function ReportsPage({
           <CardTitle>Restock due</CardTitle>
         </CardHeader>
         <CardContent>
-          <LowStockList slots={slots} bulkProducts={bulkProducts} />
+          <LowStockList bulkProducts={bulkProducts} />
         </CardContent>
       </Card>
 
@@ -79,8 +77,8 @@ export default async function ReportsPage({
         </CardHeader>
         <CardContent>
           <p className="mb-3 text-sm text-muted-foreground">
-            Based on the {rangeLabel.toLowerCase()} sales rate vs. total on hand (bulk + in
-            machines) — most urgent first.
+            Based on the {rangeLabel.toLowerCase()} sales rate vs. stock on hand — most urgent
+            first.
           </p>
           <DepletionForecast rows={depletionRows} />
         </CardContent>

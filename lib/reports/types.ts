@@ -9,16 +9,6 @@ export type SaleRecord = {
   product_name: string;
 };
 
-export type LowStockSlot = {
-  id: string;
-  slot_label: string;
-  machine_id: string;
-  machine_name: string;
-  product_name: string | null;
-  current_qty: number;
-  par_level: number;
-};
-
 export type LowBulkStockProduct = {
   id: string;
   name: string;
@@ -34,15 +24,7 @@ export type ExpiringLot = {
   expiry_date: string;
 };
 
-export type RestockActivity = {
-  id: string;
-  type: "restock";
-  machine_name: string;
-  notes: string | null;
-  at: string;
-};
-
-export type SaleActivity = {
+export type Activity = {
   id: string;
   type: "sale";
   machine_name: string;
@@ -50,5 +32,3 @@ export type SaleActivity = {
   qty: number;
   at: string;
 };
-
-export type Activity = RestockActivity | SaleActivity;

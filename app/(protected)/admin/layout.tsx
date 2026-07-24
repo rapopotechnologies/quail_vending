@@ -1,11 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/current-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import {
-  fetchExpiringLots,
-  fetchLowStockSlots,
-  fetchLowBulkStockProducts,
-} from "@/lib/reports/queries";
+import { fetchExpiringLots, fetchLowBulkStockProducts } from "@/lib/reports/queries";
 import { Navbar } from "@/components/layout/navbar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -16,12 +12,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   const supabase = await createSupabaseServerClient();
-  const [lowStockSlots, lowBulkStockProducts, expiringLots] = await Promise.all([
-    fetchLowStockSlots(supabase),
+  const [lowBulkStockProducts, expiringLots] = await Promise.all([
     fetchLowBulkStockProducts(supabase),
     fetchExpiringLots(supabase),
   ]);
-  const lowStockCount = lowStockSlots.length + lowBulkStockProducts.length + expiringLots.length;
+  const lowStockCount = lowBulkStockProducts.length + expiringLots.length;
 
   return (
     <div className="min-h-screen">

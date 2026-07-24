@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
 import { ProductFormDialog } from "@/components/products/product-form-dialog";
 import { RecordPurchaseDialog } from "@/components/products/record-purchase-dialog";
+import { RemoveStockDialog } from "@/components/products/remove-stock-dialog";
 import { SortableHeader, type SortDirection } from "@/components/shared/sortable-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatAsCrates } from "@/lib/inventory";
@@ -18,7 +19,7 @@ import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
 
-export type ProductSortKey = "name" | "sell_price" | "bulk_stock" | "total_on_hand" | "status";
+export type ProductSortKey = "name" | "sell_price" | "stock" | "status";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
   active: "default",
@@ -28,7 +29,6 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = 
 
 export function ProductsTable({
   products,
-  inMachinesByProduct,
   canDelete,
   sortKey,
   sortDir,
@@ -38,7 +38,6 @@ export function ProductsTable({
   onToggleSelectAll,
 }: {
   products: Product[];
-  inMachinesByProduct: Record<string, number>;
   canDelete: boolean;
   sortKey: ProductSortKey | null;
   sortDir: SortDirection;
@@ -83,17 +82,8 @@ export function ProductsTable({
           </TableHead>
           <TableHead className="w-36">
             <SortableHeader
-              label="Bulk stock"
-              sortKey="bulk_stock"
-              activeKey={sortKey}
-              direction={sortDir}
-              onSort={onSort}
-            />
-          </TableHead>
-          <TableHead className="w-28">
-            <SortableHeader
-              label="Total on hand"
-              sortKey="total_on_hand"
+              label="Stock"
+              sortKey="stock"
               activeKey={sortKey}
               direction={sortDir}
               onSort={onSort}
@@ -108,14 +98,12 @@ export function ProductsTable({
               onSort={onSort}
             />
           </TableHead>
-          <TableHead className="w-64 text-right">Actions</TableHead>
+          <TableHead className="w-72 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {products.map((product) => {
-          const lowBulkStock = product.warehouse_qty <= (product.warehouse_par_level ?? 0);
-          const inMachines = inMachinesByProduct[product.id] ?? 0;
-          const totalOnHand = product.warehouse_qty + inMachines;
+          const lowStock = product.warehouse_qty <= (product.warehouse_par_level ?? 0);
           return (
             <TableRow key={product.id}>
               <TableCell>
@@ -145,23 +133,19 @@ export function ProductsTable({
               <TableCell className="truncate">{product.category || "—"}</TableCell>
               <TableCell>{product.sell_price != null ? `$${product.sell_price}` : "—"}</TableCell>
               <TableCell
-                className={lowBulkStock ? "font-medium text-destructive" : undefined}
+                className={lowStock ? "font-medium text-destructive" : undefined}
                 title={`${product.warehouse_qty} individual units`}
               >
                 {formatAsCrates(product.warehouse_qty, product.units_per_case)}
                 {product.warehouse_par_level != null && ` / ${product.warehouse_par_level} par`}
-                {lowBulkStock && " (low)"}
-              </TableCell>
-              <TableCell
-                title={`${product.warehouse_qty} bulk + ${inMachines} across machines = ${totalOnHand} individual units`}
-              >
-                {formatAsCrates(totalOnHand, product.units_per_case)}
+                {lowStock && " (low)"}
               </TableCell>
               <TableCell>
                 <Badge variant={STATUS_VARIANT[product.status] ?? "secondary"}>{product.status}</Badge>
               </TableCell>
               <TableCell className="flex justify-end gap-2">
                 <RecordPurchaseDialog product={product} />
+                <RemoveStockDialog product={product} />
                 <ProductFormDialog product={product} />
                 {canDelete && (
                   <DeleteConfirmButton

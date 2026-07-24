@@ -67,14 +67,12 @@ Apply new migrations via Supabase MCP (`apply_migration`) against project `tehoe
 
 **TypeScript note:** same pre-existing issue as resume_optimizer — the generated `Database` type (from `generate_typescript_types`) targets a newer `@supabase/postgrest-js` than the installed `@supabase/supabase-js@2.110.8`, which produces widespread `never` type inference on `.from(...)` query results (e.g. `machine.name` errors even though the row is a real object at runtime). `next.config.js` sets `typescript: { ignoreBuildErrors: true }` as the blanket fix. When actively touching a file with this problem, cast the query result with `as unknown as YourType` rather than leaving `never` in the file you touched (see the `RawSlot` cast in `app/(protected)/admin/machines/[id]/page.tsx` for the pattern).
 
-## Sales tracking: subtraction-as-sale vs. manual entry
+## Inventory consumption vs. sales tracking — deliberately decoupled
 
-There's no POS/telemetry API for the vending hardware yet — the machines run on Micromart's software, which tracks real sale events internally but doesn't expose an API. Two ways sales rows get created, kept deliberately separate:
+The core thing this app's inventory side cares about is: what was bought, what's left, and what's expiring — not revenue. There's also no POS/telemetry API from the vending hardware's own software (Micromart) to reconcile against yet. Two separate, unrelated concepts as a result:
 
-- **`logSlotSale`** (`app/actions/sales.ts`, `LogSaleDialog` on the machine detail page's slot table, `components/machines/log-sale-dialog.tsx`) — the primary flow. Staff visiting a machine note how many units are gone from a slot since last visit and log that qty in one step: it decrements `stock_levels.current_qty` for that slot *and* inserts a `sales` row (`unit_price` snapshotted from the product's current `sell_price`) in the same action. This is the "subtraction is the sale" model — avoids maintaining stock counts and sales figures as two separate manual chores when there's no automated feed to reconcile against. Errors if qty exceeds the slot's current stock or the slot has no product assigned.
-- **`createSale`** (`app/actions/sales.ts`, `/admin/sales` page) — free-form manual entry (machine/product/qty/price, no stock-level side effect), kept as a fallback for cases `logSlotSale` doesn't cover: correcting/backfilling a past entry, a sale that happened outside the normal machine-visit flow, etc. Deliberately not retired — it's the only way to record a sale without also asserting something about current stock counts.
-
-Both ultimately write to the same `sales` table, so dashboard/reports aggregates don't need to know which path a row came from.
+- **`removeSlotStock`** (`app/actions/machine-slots.ts`, `RemoveStockDialog` on the machine detail page's slot table, `components/machines/remove-stock-dialog.tsx`) — plain inventory consumption. Staff visiting a machine note how many units are gone from a slot (sold, expired, damaged, whatever) and remove that qty from `stock_levels.current_qty` in one step. No price, no `sales` row, no revenue concept attached — this app doesn't track *why* stock left, only that it did. Errors if qty exceeds the slot's current stock. (Earlier iteration of this action, `logSlotSale`, also wrote a `sales` row per removal — removed once it became clear sales/revenue isn't something this app needs to track at all.)
+- **`createSale`** / **`deleteSale`** (`app/actions/sales.ts`, `/admin/sales` page) and the revenue-oriented dashboard/reports views remain as-is, untouched by this change — they're a separate, free-form manual-entry feature for whoever still wants revenue figures, with no relationship to `removeSlotStock` or stock levels.
 
 ## Dashboard & reports
 

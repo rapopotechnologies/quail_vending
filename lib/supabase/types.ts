@@ -14,55 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      machine_slots: {
-        Row: {
-          capacity: number | null
-          id: string
-          machine_id: string
-          par_level: number | null
-          product_id: string | null
-          slot_label: string
-        }
-        Insert: {
-          capacity?: number | null
-          id?: string
-          machine_id: string
-          par_level?: number | null
-          product_id?: string | null
-          slot_label: string
-        }
-        Update: {
-          capacity?: number | null
-          id?: string
-          machine_id?: string
-          par_level?: number | null
-          product_id?: string | null
-          slot_label?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "machine_slots_machine_id_fkey"
-            columns: ["machine_id"]
-            isOneToOne: false
-            referencedRelation: "machines"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "machine_slots_machine_id_fkey"
-            columns: ["machine_id"]
-            isOneToOne: false
-            referencedRelation: "public_location_impact"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "machine_slots_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       machines: {
         Row: {
           address: string | null
@@ -254,81 +205,6 @@ export type Database = {
         }
         Relationships: []
       }
-      restock_event_items: {
-        Row: {
-          id: string
-          machine_slot_id: string
-          qty_added: number
-          restock_event_id: string
-        }
-        Insert: {
-          id?: string
-          machine_slot_id: string
-          qty_added: number
-          restock_event_id: string
-        }
-        Update: {
-          id?: string
-          machine_slot_id?: string
-          qty_added?: number
-          restock_event_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "restock_event_items_machine_slot_id_fkey"
-            columns: ["machine_slot_id"]
-            isOneToOne: false
-            referencedRelation: "machine_slots"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "restock_event_items_restock_event_id_fkey"
-            columns: ["restock_event_id"]
-            isOneToOne: false
-            referencedRelation: "restock_events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      restock_events: {
-        Row: {
-          id: string
-          machine_id: string
-          notes: string | null
-          performed_at: string
-          performed_by: string | null
-        }
-        Insert: {
-          id?: string
-          machine_id: string
-          notes?: string | null
-          performed_at?: string
-          performed_by?: string | null
-        }
-        Update: {
-          id?: string
-          machine_id?: string
-          notes?: string | null
-          performed_at?: string
-          performed_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "restock_events_machine_id_fkey"
-            columns: ["machine_id"]
-            isOneToOne: false
-            referencedRelation: "machines"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "restock_events_machine_id_fkey"
-            columns: ["machine_id"]
-            isOneToOne: false
-            referencedRelation: "public_location_impact"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       sales: {
         Row: {
           entered_by: string | null
@@ -377,35 +253,6 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stock_levels: {
-        Row: {
-          current_qty: number
-          id: string
-          last_counted_at: string | null
-          machine_slot_id: string
-        }
-        Insert: {
-          current_qty?: number
-          id?: string
-          last_counted_at?: string | null
-          machine_slot_id: string
-        }
-        Update: {
-          current_qty?: number
-          id?: string
-          last_counted_at?: string | null
-          machine_slot_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stock_levels_machine_slot_id_fkey"
-            columns: ["machine_slot_id"]
-            isOneToOne: true
-            referencedRelation: "machine_slots"
             referencedColumns: ["id"]
           },
         ]

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-import { logSlotSale } from "@/app/actions/sales";
+import { removeStock } from "@/app/actions/products";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,20 +17,9 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import type { Tables } from "@/lib/supabase/types";
 
-export function LogSaleDialog({
-  machineId,
-  slotId,
-  slotLabel,
-  productName,
-  currentQty,
-}: {
-  machineId: string;
-  slotId: string;
-  slotLabel: string;
-  productName: string | null;
-  currentQty: number;
-}) {
+export function RemoveStockDialog({ product }: { product: Tables<"products"> }) {
   const [open, setOpen] = useState(false);
   const [qty, setQty] = useState("1");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,8 +34,8 @@ export function LogSaleDialog({
     }
     setIsSubmitting(true);
     try {
-      await logSlotSale(machineId, slotId, Math.trunc(value));
-      toast.success(`Logged ${value} sold from ${slotLabel}`);
+      await removeStock(product.id, Math.trunc(value));
+      toast.success(`Removed ${value} from stock`);
       setOpen(false);
       setQty("1");
       router.refresh();
@@ -60,26 +49,26 @@ export function LogSaleDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={!productName || currentQty <= 0}>
-          Log sale
+        <Button variant="outline" size="sm" disabled={product.warehouse_qty <= 0}>
+          Remove stock
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Log sale — {slotLabel}</DialogTitle>
+          <DialogTitle>Remove stock</DialogTitle>
           <DialogDescription>
-            {productName} — {currentQty} currently in this slot. Qty entered here is subtracted
-            from stock and recorded as a sale at the product&apos;s current sell price.
+            {product.name} — {product.warehouse_qty} currently in stock. Qty entered here is
+            subtracted (sold, expired, damaged — whatever the reason).
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="sale-qty">Qty sold / taken</Label>
+            <Label htmlFor="remove-qty">Qty removed</Label>
             <Input
-              id="sale-qty"
+              id="remove-qty"
               type="number"
               min={1}
-              max={currentQty}
+              max={product.warehouse_qty}
               autoFocus
               value={qty}
               onChange={(e) => setQty(e.target.value)}
@@ -87,7 +76,7 @@ export function LogSaleDialog({
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Log sale"}
+              {isSubmitting ? "Saving..." : "Remove stock"}
             </Button>
           </DialogFooter>
         </form>

@@ -1,11 +1,5 @@
 import type { createSupabaseServerClient } from "@/lib/supabase/server";
-import type {
-  Activity,
-  ExpiringLot,
-  LowBulkStockProduct,
-  LowStockSlot,
-  SaleRecord,
-} from "./types";
+import type { Activity, ExpiringLot, LowBulkStockProduct, SaleRecord } from "./types";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
@@ -47,35 +41,6 @@ export async function fetchSalesWithNames(
   }));
 }
 
-export async function fetchLowStockSlots(supabase: SupabaseServerClient): Promise<LowStockSlot[]> {
-  const { data } = await supabase
-    .from("machine_slots")
-    .select("id, slot_label, machine_id, par_level, machines(name), products(name), stock_levels(current_qty)")
-    .not("par_level", "is", null);
-
-  type RawSlot = {
-    id: string;
-    slot_label: string;
-    machine_id: string;
-    par_level: number | null;
-    machines: { name: string } | null;
-    products: { name: string } | null;
-    stock_levels: { current_qty: number } | null;
-  };
-
-  return ((data ?? []) as unknown as RawSlot[])
-    .map((s) => ({
-      id: s.id,
-      slot_label: s.slot_label,
-      machine_id: s.machine_id,
-      machine_name: s.machines?.name ?? "—",
-      product_name: s.products?.name ?? null,
-      current_qty: s.stock_levels?.current_qty ?? 0,
-      par_level: s.par_level as number,
-    }))
-    .filter((s) => s.current_qty <= s.par_level);
-}
-
 export async function fetchLowBulkStockProducts(
   supabase: SupabaseServerClient
 ): Promise<LowBulkStockProduct[]> {
@@ -96,32 +61,16 @@ export async function fetchLowBulkStockProducts(
   );
 }
 
-export async function fetchTotalOnHandByProduct(
+export async function fetchWarehouseQtyByProduct(
   supabase: SupabaseServerClient
-): Promise<Record<string, { name: string; totalOnHand: number }>> {
-  const [{ data: products }, { data: rawSlots }] = await Promise.all([
-    supabase.from("products").select("id, name, warehouse_qty"),
-    supabase
-      .from("machine_slots")
-      .select("product_id, stock_levels(current_qty)")
-      .not("product_id", "is", null),
-  ]);
+): Promise<Record<string, number>> {
+  const { data } = await supabase.from("products").select("id, warehouse_qty");
 
-  type RawProduct = { id: string; name: string; warehouse_qty: number };
-  type RawSlot = { product_id: string; stock_levels: { current_qty: number } | null };
+  type RawProduct = { id: string; warehouse_qty: number };
 
-  const inMachinesByProduct: Record<string, number> = {};
-  for (const s of (rawSlots ?? []) as unknown as RawSlot[]) {
-    inMachinesByProduct[s.product_id] =
-      (inMachinesByProduct[s.product_id] ?? 0) + (s.stock_levels?.current_qty ?? 0);
-  }
-
-  const result: Record<string, { name: string; totalOnHand: number }> = {};
-  for (const p of (products ?? []) as unknown as RawProduct[]) {
-    result[p.id] = {
-      name: p.name,
-      totalOnHand: p.warehouse_qty + (inMachinesByProduct[p.id] ?? 0),
-    };
+  const result: Record<string, number> = {};
+  for (const p of (data ?? []) as unknown as RawProduct[]) {
+    result[p.id] = p.warehouse_qty;
   }
   return result;
 }
@@ -161,25 +110,12 @@ export async function fetchRecentActivity(
   supabase: SupabaseServerClient,
   limit = 10
 ): Promise<Activity[]> {
-  const [{ data: restocks }, { data: sales }] = await Promise.all([
-    supabase
-      .from("restock_events")
-      .select("id, notes, performed_at, machines(name)")
-      .order("performed_at", { ascending: false })
-      .limit(limit),
-    supabase
-      .from("sales")
-      .select("id, qty, sold_at, machines(name), products(name)")
-      .order("sold_at", { ascending: false })
-      .limit(limit),
-  ]);
+  const { data: sales } = await supabase
+    .from("sales")
+    .select("id, qty, sold_at, machines(name), products(name)")
+    .order("sold_at", { ascending: false })
+    .limit(limit);
 
-  type RawRestock = {
-    id: string;
-    notes: string | null;
-    performed_at: string;
-    machines: { name: string } | null;
-  };
   type RawSale = {
     id: string;
     qty: number;
@@ -188,15 +124,7 @@ export async function fetchRecentActivity(
     products: { name: string } | null;
   };
 
-  const restockActivity: Activity[] = ((restocks ?? []) as unknown as RawRestock[]).map((r) => ({
-    id: r.id,
-    type: "restock",
-    machine_name: r.machines?.name ?? "—",
-    notes: r.notes,
-    at: r.performed_at,
-  }));
-
-  const saleActivity: Activity[] = ((sales ?? []) as unknown as RawSale[]).map((s) => ({
+  return ((sales ?? []) as unknown as RawSale[]).map((s) => ({
     id: s.id,
     type: "sale",
     machine_name: s.machines?.name ?? "—",
@@ -204,8 +132,4 @@ export async function fetchRecentActivity(
     qty: s.qty,
     at: s.sold_at,
   }));
-
-  return [...restockActivity, ...saleActivity]
-    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
-    .slice(0, limit);
 }
