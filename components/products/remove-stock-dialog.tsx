@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { PackageMinus } from "lucide-react";
 
 import { removeStock } from "@/app/actions/products";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { Tables } from "@/lib/supabase/types";
 
 export function RemoveStockDialog({ product }: { product: Tables<"products"> }) {
@@ -48,11 +50,21 @@ export function RemoveStockDialog({ product }: { product: Tables<"products"> }) 
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={product.warehouse_qty <= 0}>
-          Remove stock
-        </Button>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Remove stock"
+              disabled={product.warehouse_qty <= 0}
+            >
+              <PackageMinus className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>Remove stock</TooltipContent>
+      </Tooltip>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Remove stock</DialogTitle>

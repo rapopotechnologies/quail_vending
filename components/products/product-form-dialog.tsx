@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
 
 import { createProduct, updateProduct } from "@/app/actions/products";
 import { productSchema, type ProductValues } from "@/lib/validations/product";
@@ -21,6 +22,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ImageUpload } from "@/components/shared/image-upload";
 import type { Tables } from "@/lib/supabase/types";
 
@@ -84,11 +86,24 @@ export function ProductFormDialog({ product }: { product?: Product }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant={isEdit ? "outline" : "default"} size="sm">
-          {isEdit ? "Edit" : "Add product"}
-        </Button>
-      </DialogTrigger>
+      {isEdit ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="icon" aria-label="Edit">
+                <Pencil className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent>Edit</TooltipContent>
+        </Tooltip>
+      ) : (
+        <DialogTrigger asChild>
+          <Button variant="default" size="sm">
+            Add product
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit product" : "Add product"}</DialogTitle>

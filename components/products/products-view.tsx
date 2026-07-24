@@ -10,6 +10,7 @@ import type { SortDirection } from "@/components/shared/sortable-header";
 import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
+type Machine = Tables<"machines">;
 
 const ALL_CATEGORIES = "__all__";
 
@@ -19,9 +20,11 @@ function isLowStock(p: Product) {
 
 export function ProductsView({
   products,
+  machines,
   canDelete,
 }: {
   products: Product[];
+  machines: Machine[];
   canDelete: boolean;
 }) {
   const [filter, setFilter] = useState<"all" | "low-stock">("all");
@@ -155,6 +158,7 @@ export function ProductsView({
       ) : (
         <ProductsTable
           products={filtered}
+          machines={machines}
           canDelete={canDelete}
           sortKey={sortKey}
           sortDir={sortDir}

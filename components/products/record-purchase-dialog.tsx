@@ -65,14 +65,15 @@ export function RecordPurchaseDialog({ product }: { product: Tables<"products"> 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          Record purchase
+          Restock warehouse
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record a purchase</DialogTitle>
+          <DialogTitle>Restock warehouse</DialogTitle>
           <DialogDescription>
-            {product.name} — currently {product.warehouse_qty} in bulk stock
+            Add newly purchased stock (e.g. a Costco run) to {product.name}&apos;s bulk warehouse
+            supply — currently {product.warehouse_qty} in stock
             {hasCases && ` (${perCase} units/case)`}.
           </DialogDescription>
         </DialogHeader>

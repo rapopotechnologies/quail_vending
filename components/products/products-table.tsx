@@ -9,15 +9,18 @@ import { deleteProduct } from "@/app/actions/products";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DeleteConfirmButton } from "@/components/shared/delete-confirm-button";
+import { LogSaleDialog } from "@/components/products/log-sale-dialog";
 import { ProductFormDialog } from "@/components/products/product-form-dialog";
 import { RecordPurchaseDialog } from "@/components/products/record-purchase-dialog";
 import { RemoveStockDialog } from "@/components/products/remove-stock-dialog";
 import { SortableHeader, type SortDirection } from "@/components/shared/sortable-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { formatAsCrates } from "@/lib/inventory";
 import type { Tables } from "@/lib/supabase/types";
 
 type Product = Tables<"products">;
+type Machine = Tables<"machines">;
 
 export type ProductSortKey = "name" | "sell_price" | "stock" | "status";
 
@@ -29,6 +32,7 @@ const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = 
 
 export function ProductsTable({
   products,
+  machines,
   canDelete,
   sortKey,
   sortDir,
@@ -38,6 +42,7 @@ export function ProductsTable({
   onToggleSelectAll,
 }: {
   products: Product[];
+  machines: Machine[];
   canDelete: boolean;
   sortKey: ProductSortKey | null;
   sortDir: SortDirection;
@@ -55,6 +60,7 @@ export function ProductsTable({
   const allSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
 
   return (
+    <TooltipProvider delayDuration={200}>
     <Table className="table-fixed">
       <TableHeader>
         <TableRow>
@@ -98,7 +104,7 @@ export function ProductsTable({
               onSort={onSort}
             />
           </TableHead>
-          <TableHead className="w-72 text-right">Actions</TableHead>
+          <TableHead className="w-52 text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -143,12 +149,14 @@ export function ProductsTable({
               <TableCell>
                 <Badge variant={STATUS_VARIANT[product.status] ?? "secondary"}>{product.status}</Badge>
               </TableCell>
-              <TableCell className="flex flex-wrap justify-end gap-2 py-2">
+              <TableCell className="flex flex-wrap items-center justify-end gap-1.5 py-2">
                 <RecordPurchaseDialog product={product} />
                 <RemoveStockDialog product={product} />
+                <LogSaleDialog product={product} machines={machines} />
                 <ProductFormDialog product={product} />
                 {canDelete && (
                   <DeleteConfirmButton
+                    iconOnly
                     confirmMessage={`Delete "${product.name}"? This can't be undone.`}
                     onDelete={async () => {
                       await deleteProduct(product.id);
@@ -163,5 +171,6 @@ export function ProductsTable({
         })}
       </TableBody>
     </Table>
+    </TooltipProvider>
   );
 }

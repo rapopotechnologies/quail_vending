@@ -6,8 +6,9 @@ import { ProductFormDialog } from "@/components/products/product-form-dialog";
 
 export default async function ProductsPage() {
   const supabase = await createSupabaseServerClient();
-  const [{ data: products }, profile] = await Promise.all([
+  const [{ data: products }, { data: machines }, profile] = await Promise.all([
     supabase.from("products").select("*").order("name"),
+    supabase.from("machines").select("*").order("name"),
     getCurrentProfile(),
   ]);
 
@@ -18,7 +19,11 @@ export default async function ProductsPage() {
         <ProductFormDialog />
       </CardHeader>
       <CardContent>
-        <ProductsView products={products ?? []} canDelete={profile?.role === "super_admin"} />
+        <ProductsView
+          products={products ?? []}
+          machines={machines ?? []}
+          canDelete={profile?.role === "super_admin"}
+        />
       </CardContent>
     </Card>
   );
