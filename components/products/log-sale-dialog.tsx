@@ -67,13 +67,23 @@ export function LogSaleDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="icon" aria-label="Log sale" disabled={machines.length === 0}>
-              <ShoppingCart className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
+          <span className={machines.length === 0 ? "inline-block cursor-not-allowed" : undefined}>
+            <DialogTrigger asChild disabled={machines.length === 0}>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Log sale"
+                disabled={machines.length === 0}
+                className={machines.length === 0 ? "pointer-events-none" : undefined}
+              >
+                <ShoppingCart className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+          </span>
         </TooltipTrigger>
-        <TooltipContent>Log sale</TooltipContent>
+        <TooltipContent>
+          {machines.length === 0 ? "Add a machine first to log sales" : "Log sale"}
+        </TooltipContent>
       </Tooltip>
       <DialogContent>
         <DialogHeader>
