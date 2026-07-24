@@ -143,7 +143,7 @@ export function ProductsTable({
               <TableCell>
                 <Badge variant={STATUS_VARIANT[product.status] ?? "secondary"}>{product.status}</Badge>
               </TableCell>
-              <TableCell className="flex justify-end gap-2">
+              <TableCell className="flex flex-wrap justify-end gap-2 py-2">
                 <RecordPurchaseDialog product={product} />
                 <RemoveStockDialog product={product} />
                 <ProductFormDialog product={product} />
