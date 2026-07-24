@@ -63,8 +63,8 @@ export function SaleForm({
       <div className="space-y-2">
         <Label>Machine</Label>
         <Select value={watch("machine_id")} onValueChange={(v) => setValue("machine_id", v)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Pick a machine" />
+          <SelectTrigger className="overflow-hidden">
+            <SelectValue placeholder="Pick a machine" className="min-w-0 truncate" />
           </SelectTrigger>
           <SelectContent>
             {machines.map((m) => (
@@ -82,8 +82,8 @@ export function SaleForm({
       <div className="space-y-2">
         <Label>Product</Label>
         <Select value={watch("product_id")} onValueChange={onProductChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Pick a product" />
+          <SelectTrigger className="overflow-hidden">
+            <SelectValue placeholder="Pick a product" className="min-w-0 truncate" />
           </SelectTrigger>
           <SelectContent>
             {products.map((p) => (
@@ -93,6 +93,9 @@ export function SaleForm({
             ))}
           </SelectContent>
         </Select>
+        {products.length === 0 && (
+          <p className="text-sm text-muted-foreground">No products with stock on hand.</p>
+        )}
         {errors.product_id && (
           <p className="text-sm text-destructive">{errors.product_id.message}</p>
         )}

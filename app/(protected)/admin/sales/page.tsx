@@ -3,6 +3,7 @@ import { getCurrentProfile } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SaleForm } from "@/components/sales/sale-form";
 import { SalesLog, type SaleRow } from "@/components/sales/sales-log";
+import type { Tables } from "@/lib/supabase/types";
 
 export default async function SalesPage() {
   const supabase = await createSupabaseServerClient();
@@ -43,7 +44,12 @@ export default async function SalesPage() {
           <CardTitle>Log a sale</CardTitle>
         </CardHeader>
         <CardContent>
-          <SaleForm machines={machines ?? []} products={products ?? []} />
+          <SaleForm
+            machines={machines ?? []}
+            products={((products ?? []) as unknown as Tables<"products">[]).filter(
+              (p) => p.warehouse_qty > 0
+            )}
+          />
         </CardContent>
       </Card>
 
